@@ -23,9 +23,9 @@ CREATE INDEX IF NOT EXISTS idx_asteroids_orbital_elements_gin ON asteroids USING
 CREATE INDEX IF NOT EXISTS idx_asteroids_physical_properties_gin ON asteroids USING GIN (physical_properties);
 
 -- Create specific indexes for commonly queried JSONB fields
-CREATE INDEX IF NOT EXISTS idx_asteroids_composition_type ON asteroids USING GIN ((physical_properties->>'composition_type'));
-CREATE INDEX IF NOT EXISTS idx_asteroids_diameter ON asteroids USING GIN ((physical_properties->>'diameter'));
-CREATE INDEX IF NOT EXISTS idx_asteroids_mass ON asteroids USING GIN ((physical_properties->>'mass'));
+CREATE INDEX IF NOT EXISTS idx_asteroids_composition_type ON asteroids((physical_properties->>'composition_type'));
+CREATE INDEX IF NOT EXISTS idx_asteroids_diameter ON asteroids((physical_properties->>'diameter'));
+CREATE INDEX IF NOT EXISTS idx_asteroids_mass ON asteroids((physical_properties->>'mass'));
 
 -- Add comments for documentation
 COMMENT ON TABLE asteroids IS 'Stores asteroid data including orbital elements and physical properties';
