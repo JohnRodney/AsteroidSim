@@ -46,6 +46,9 @@ export class AsteroidSimulator {
     // Create scene
     this.scene = new Scene(this.engine)
 
+    // Set dark background for better asteroid visibility
+    this.scene.clearColor = new Color3(0, 0, 0)
+
     // Setup camera
     this.setupCamera()
 
