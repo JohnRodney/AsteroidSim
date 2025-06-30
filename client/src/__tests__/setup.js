@@ -22,48 +22,48 @@ global.HTMLCanvasElement.prototype.getContext = () => ({
   measureText: () => ({ width: 0 }),
   transform: () => {},
   rect: () => {},
-  clip: () => {},
-});
+  clip: () => {}
+})
 
 // Mock WebSocket
 global.WebSocket = class MockWebSocket {
-  constructor(url) {
-    this.url = url;
-    this.readyState = WebSocket.CONNECTING;
-    this.onopen = null;
-    this.onmessage = null;
-    this.onclose = null;
-    this.onerror = null;
+  constructor (url) {
+    this.url = url
+    this.readyState = WebSocket.CONNECTING
+    this.onopen = null
+    this.onmessage = null
+    this.onclose = null
+    this.onerror = null
 
     // Simulate connection
     setTimeout(() => {
-      this.readyState = WebSocket.OPEN;
-      if (this.onopen) this.onopen();
-    }, 0);
+      this.readyState = WebSocket.OPEN
+      if (this.onopen) this.onopen()
+    }, 0)
   }
 
-  send(_data) {
+  send (_data) {
     // Mock send
   }
 
-  close(code, reason) {
-    this.readyState = WebSocket.CLOSED;
-    if (this.onclose) this.onclose({ code, reason });
+  close (code, reason) {
+    this.readyState = WebSocket.CLOSED
+    if (this.onclose) this.onclose({ code, reason })
   }
-};
+}
 
-WebSocket.CONNECTING = 0;
-WebSocket.OPEN = 1;
-WebSocket.CLOSING = 2;
-WebSocket.CLOSED = 3;
+WebSocket.CONNECTING = 0
+WebSocket.OPEN = 1
+WebSocket.CLOSING = 2
+WebSocket.CLOSED = 3
 
 // Mock performance API
 global.performance = {
-  now: () => Date.now(),
-};
+  now: () => Date.now()
+}
 
 // Mock document methods
-Object.defineProperty(document, "getElementById", {
+Object.defineProperty(document, 'getElementById', {
   value: (id) => {
     const element = {
       id,
@@ -71,7 +71,7 @@ Object.defineProperty(document, "getElementById", {
       classList: {
         add: () => {},
         remove: () => {},
-        contains: () => false,
+        contains: () => false
       },
       addEventListener: () => {},
       removeEventListener: () => {},
@@ -79,19 +79,19 @@ Object.defineProperty(document, "getElementById", {
       querySelectorAll: () => [],
       appendChild: () => {},
       removeChild: () => {},
-      parentNode: null,
-    };
-    return element;
-  },
-});
+      parentNode: null
+    }
+    return element
+  }
+})
 
 // Mock window methods
 global.window = {
   addEventListener: () => {},
   removeEventListener: () => {},
   location: {
-    protocol: "http:",
-    hostname: "localhost",
-    port: "3000",
-  },
-};
+    protocol: 'http:',
+    hostname: 'localhost',
+    port: '3000'
+  }
+}
