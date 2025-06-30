@@ -37,7 +37,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
         run: |
@@ -85,7 +84,6 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
-          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
         run: |
@@ -108,7 +106,6 @@ jobs:
         with:
           node-version: "20.x"
           cache: "npm"
-          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
         run: |
