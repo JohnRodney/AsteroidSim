@@ -8,19 +8,14 @@ export class WebSocketService {
     this.onAsteroidData = null
     this.onConnectionChange = null
     this.onError = null
+    this.backendUrl = 'http://localhost:3002'
+    this.wsUrl = 'ws://localhost:3002'
   }
 
   connect () {
     try {
-      // Determine WebSocket URL based on environment
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = window.location.hostname
-      const port = window.location.port || (protocol === 'wss:' ? '443' : '80')
-      const wsUrl = `${protocol}//${host}:${port}/ws`
-
-      console.log('Connecting to WebSocket:', wsUrl)
-
-      this.ws = new WebSocket(wsUrl)
+      console.log('Connecting to WebSocket:', this.wsUrl)
+      this.ws = new WebSocket(this.wsUrl)
 
       this.ws.onopen = () => {
         console.log('WebSocket connected')
@@ -36,7 +31,7 @@ export class WebSocketService {
           const data = JSON.parse(event.data)
           this.handleMessage(data)
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error)
+          console.error('Error parsing WebSocket message:', error)
         }
       }
 
@@ -46,14 +41,7 @@ export class WebSocketService {
         if (this.onConnectionChange) {
           this.onConnectionChange(false)
         }
-
-        // Attempt to reconnect if not a normal closure
-        if (
-          event.code !== 1000 &&
-          this.reconnectAttempts < this.maxReconnectAttempts
-        ) {
-          this.scheduleReconnect()
-        }
+        this.attemptReconnect()
       }
 
       this.ws.onerror = (error) => {
@@ -63,45 +51,29 @@ export class WebSocketService {
         }
       }
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error)
+      console.error('Error creating WebSocket connection:', error)
       if (this.onError) {
         this.onError(error)
       }
     }
   }
 
-  scheduleReconnect () {
-    this.reconnectAttempts++
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
-
-    console.log(
-      `Scheduling WebSocket reconnect attempt ${this.reconnectAttempts} in ${delay}ms`
-    )
-
-    setTimeout(() => {
-      if (!this.isConnected) {
-        this.connect()
-      }
-    }, delay)
-  }
-
   handleMessage (data) {
     switch (data.type) {
-    case 'asteroid_data':
-      if (this.onAsteroidData) {
-        this.onAsteroidData(data.payload)
-      }
-      break
-
     case 'asteroid_update':
       if (this.onAsteroidData) {
         this.onAsteroidData(data.payload)
       }
       break
 
-    case 'simulation_state':
-      // Handle simulation state updates
-      console.log('Simulation state update:', data.payload)
+    case 'asteroid_batch':
+      if (this.onAsteroidData) {
+        this.onAsteroidData(data.payload)
+      }
+      break
+
+    case 'stats_update':
+      // Handle stats updates
       break
 
     case 'error':
@@ -112,69 +84,98 @@ export class WebSocketService {
       break
 
     default:
-      console.log('Unknown message type:', data.type, data)
+      console.log('Unknown message type:', data.type)
     }
   }
 
-  send (message) {
-    if (this.isConnected && this.ws) {
-      try {
-        this.ws.send(JSON.stringify(message))
-      } catch (error) {
-        console.error('Failed to send WebSocket message:', error)
-        if (this.onError) {
-          this.onError(error)
-        }
-      }
+  attemptReconnect () {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+      console.log(
+        `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      )
+      setTimeout(() => {
+        this.connect()
+      }, this.reconnectDelay * this.reconnectAttempts)
     } else {
-      console.warn('WebSocket not connected, cannot send message')
+      console.error('Max reconnection attempts reached')
     }
-  }
-
-  requestAsteroidData () {
-    this.send({
-      type: 'request_asteroid_data',
-      payload: {}
-    })
-  }
-
-  requestSimulationState () {
-    this.send({
-      type: 'request_simulation_state',
-      payload: {}
-    })
-  }
-
-  setTimeSpeed (speed) {
-    this.send({
-      type: 'set_time_speed',
-      payload: { speed }
-    })
-  }
-
-  pauseSimulation () {
-    this.send({
-      type: 'pause_simulation',
-      payload: {}
-    })
-  }
-
-  resumeSimulation () {
-    this.send({
-      type: 'resume_simulation',
-      payload: {}
-    })
   }
 
   disconnect () {
     if (this.ws) {
       this.ws.close(1000, 'Client disconnecting')
       this.ws = null
-      this.isConnected = false
+    }
+    this.isConnected = false
+  }
+
+  send (data) {
+    if (this.ws && this.isConnected) {
+      this.ws.send(JSON.stringify(data))
+    } else {
+      console.warn('WebSocket not connected, cannot send message')
     }
   }
 
-  isReady () {
-    return this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN
+  // Request asteroid data from backend
+  async fetchAsteroids (params = {}) {
+    try {
+      const queryParams = new URLSearchParams(params)
+      const response = await fetch(
+        `${this.backendUrl}/api/asteroids?${queryParams}`
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching asteroids:', error)
+      throw error
+    }
+  }
+
+  // Request asteroid statistics
+  async fetchStats () {
+    try {
+      const response = await fetch(
+        `${this.backendUrl}/api/asteroids/stats/summary`
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+      throw error
+    }
+  }
+
+  // Sync asteroid data from external APIs
+  async syncAsteroidData () {
+    try {
+      const response = await fetch(`${this.backendUrl}/api/asteroids/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error syncing asteroid data:', error)
+      throw error
+    }
   }
 }

@@ -10,7 +10,7 @@ const { setupWebSocketServer } = require('./services/websocket');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Security middleware
 app.use(helmet());

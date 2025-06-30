@@ -1,52 +1,57 @@
 export class UIManager {
   constructor () {
     this.loadingScreen = document.getElementById('loading-screen')
+    this.loadingText = document.getElementById('loading-text')
+    this.errorMessage = document.getElementById('error-message')
     this.asteroidCountElement = document.getElementById('asteroid-count')
+    this.planetCountElement = document.getElementById('planet-count')
     this.totalMassElement = document.getElementById('total-mass')
     this.fpsElement = document.getElementById('fps')
+    this.simulationDateElement = document.getElementById('simulation-date')
+    this.connectionStatus = document.getElementById('connectionStatus')
+    this.connectionText = document.getElementById('connectionText')
+    this.syncBtn = document.getElementById('syncBtn')
+    this.pauseBtn = document.getElementById('pauseBtn')
+    this.resetBtn = document.getElementById('resetBtn')
+    this.timeSpeedSlider = document.getElementById('timeSpeed')
+    this.speedValue = document.getElementById('speedValue')
+
+    // Navigation panel
+    this.navigationPanel = null
+    this.simulator = null // Reference to the simulator for zooming
   }
 
   showLoading (message = 'Loading...') {
     if (this.loadingScreen) {
-      const messageElement = this.loadingScreen.querySelector('p')
-      if (messageElement) {
-        messageElement.textContent = message
+      this.loadingScreen.style.display = 'flex'
+      if (this.loadingText) {
+        this.loadingText.textContent = message
       }
-      this.loadingScreen.classList.remove('hidden')
     }
   }
 
   hideLoading () {
     if (this.loadingScreen) {
-      this.loadingScreen.classList.add('hidden')
+      this.loadingScreen.style.display = 'none'
     }
   }
 
   showError (message) {
-    // Create error notification
-    const errorDiv = document.createElement('div')
-    errorDiv.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 0, 0, 0.9);
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      z-index: 1000;
-      max-width: 300px;
-      word-wrap: break-word;
-    `
-    errorDiv.textContent = message
+    if (this.errorMessage) {
+      this.errorMessage.textContent = message
+      this.errorMessage.style.display = 'block'
 
-    document.body.appendChild(errorDiv)
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        this.hideError()
+      }, 5000)
+    }
+  }
 
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (errorDiv.parentNode) {
-        errorDiv.parentNode.removeChild(errorDiv)
-      }
-    }, 5000)
+  hideError () {
+    if (this.errorMessage) {
+      this.errorMessage.style.display = 'none'
+    }
   }
 
   showNotification (message, type = 'info') {
@@ -83,10 +88,30 @@ export class UIManager {
     }, 3000)
   }
 
+  updateConnectionStatus (isConnected, isConnecting = false) {
+    if (this.connectionStatus && this.connectionText) {
+      if (isConnecting) {
+        this.connectionStatus.className = 'status-indicator status-connecting'
+        this.connectionText.textContent = 'Connecting...'
+      } else if (isConnected) {
+        this.connectionStatus.className = 'status-indicator status-connected'
+        this.connectionText.textContent = 'Connected'
+      } else {
+        this.connectionStatus.className =
+          'status-indicator status-disconnected'
+        this.connectionText.textContent = 'Disconnected'
+      }
+    }
+  }
+
   updateStats (stats) {
     if (this.asteroidCountElement) {
       this.asteroidCountElement.textContent =
         stats.asteroidCount.toLocaleString()
+    }
+
+    if (this.planetCountElement) {
+      this.planetCountElement.textContent = stats.planetCount.toLocaleString()
     }
 
     if (this.totalMassElement) {
@@ -101,25 +126,104 @@ export class UIManager {
   formatMass (mass) {
     if (mass === 0) return '0 kg'
 
-    const units = [
-      { value: 1e24, symbol: 'Yg' },
-      { value: 1e21, symbol: 'Zg' },
-      { value: 1e18, symbol: 'Eg' },
-      { value: 1e15, symbol: 'Pg' },
-      { value: 1e12, symbol: 'Tg' },
-      { value: 1e9, symbol: 'Gg' },
-      { value: 1e6, symbol: 'Mg' },
-      { value: 1e3, symbol: 'kg' },
-      { value: 1, symbol: 'g' }
-    ]
+    if (mass >= 1e24) {
+      return (mass / 1e24).toFixed(2) + ' Yg'
+    } else if (mass >= 1e21) {
+      return (mass / 1e21).toFixed(2) + ' Zg'
+    } else if (mass >= 1e18) {
+      return (mass / 1e18).toFixed(2) + ' Eg'
+    } else if (mass >= 1e15) {
+      return (mass / 1e15).toFixed(2) + ' Pg'
+    } else if (mass >= 1e12) {
+      return (mass / 1e12).toFixed(2) + ' Tg'
+    } else if (mass >= 1e9) {
+      return (mass / 1e9).toFixed(2) + ' Gg'
+    } else if (mass >= 1e6) {
+      return (mass / 1e6).toFixed(2) + ' Mg'
+    } else if (mass >= 1e3) {
+      return (mass / 1e3).toFixed(2) + ' kg'
+    } else {
+      return mass.toFixed(2) + ' g'
+    }
+  }
 
-    for (const unit of units) {
-      if (mass >= unit.value) {
-        return (mass / unit.value).toFixed(2) + ' ' + unit.symbol
+  formatDistance (distance) {
+    if (distance === 0) return '0 km'
+
+    if (distance >= 1e9) {
+      return (distance / 1e9).toFixed(2) + ' Gm'
+    } else if (distance >= 1e6) {
+      return (distance / 1e6).toFixed(2) + ' Mm'
+    } else if (distance >= 1e3) {
+      return (distance / 1e3).toFixed(2) + ' km'
+    } else {
+      return distance.toFixed(2) + ' m'
+    }
+  }
+
+  formatTime (seconds) {
+    if (seconds === 0) return '0 s'
+
+    const days = Math.floor(seconds / 86400)
+    const hours = Math.floor((seconds % 86400) / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    } else {
+      return `${minutes}m`
+    }
+  }
+
+  setSyncButtonLoading (isLoading) {
+    if (this.syncBtn) {
+      if (isLoading) {
+        this.syncBtn.textContent = 'Syncing...'
+        this.syncBtn.disabled = true
+      } else {
+        this.syncBtn.textContent = 'Sync Data'
+        this.syncBtn.disabled = false
       }
     }
+  }
 
-    return mass.toFixed(2) + ' g'
+  setPauseButtonState (isPaused) {
+    if (this.pauseBtn) {
+      this.pauseBtn.textContent = isPaused ? 'Resume' : 'Pause'
+    }
+  }
+
+  updateSpeedValue (speed) {
+    if (this.speedValue) {
+      this.speedValue.textContent = speed + 'x'
+    }
+  }
+
+  updateSimulationDate (date) {
+    if (this.simulationDateElement) {
+      this.simulationDateElement.textContent = date.toLocaleDateString()
+    }
+  }
+
+  showPlanetInfo (planetKey, planet) {
+    // Create a simple planet info display
+    const planetData = planet.planetData
+    const orbital = planetData.orbital
+
+    // Calculate orbital period in days
+    const orbitalPeriod = orbital.n ? 365.25 / orbital.n : 0
+
+    const message = `${planetData.name}
+Diameter: ${this.formatDistance(planetData.diameter)} km
+Mass: ${this.formatMass(planetData.mass)}
+Distance from Sun: ${(orbital.a * 149.6).toFixed(1)} million km
+Orbital Period: ${orbitalPeriod.toFixed(1)} days
+Eccentricity: ${orbital.e.toFixed(4)}
+Inclination: ${orbital.i.toFixed(2)}°`
+
+    this.showNotification(message, 'info')
   }
 
   createInfoPanel (asteroidData) {
@@ -175,39 +279,180 @@ export class UIManager {
     }, 10000)
   }
 
-  formatDistance (distance) {
-    if (distance === 0) return '0 km'
-
-    if (distance >= 1e9) {
-      return (distance / 1e9).toFixed(2) + ' billion km'
-    } else if (distance >= 1e6) {
-      return (distance / 1e6).toFixed(2) + ' million km'
-    } else if (distance >= 1e3) {
-      return (distance / 1e3).toFixed(2) + ' thousand km'
-    }
-
-    return distance.toFixed(2) + ' km'
-  }
-
-  formatTime (seconds) {
-    if (seconds === 0) return '0 days'
-
-    const days = seconds / (24 * 60 * 60)
-    const years = days / 365.25
-
-    if (years >= 1) {
-      return years.toFixed(2) + ' years'
-    }
-
-    return days.toFixed(1) + ' days'
-  }
-
   showLoadingProgress (progress, message) {
     if (this.loadingScreen) {
       const messageElement = this.loadingScreen.querySelector('p')
       if (messageElement) {
         messageElement.textContent = `${message} (${Math.round(progress)}%)`
       }
+    }
+  }
+
+  // Create navigation panel with planet and asteroid buttons
+  createNavigationPanel (simulator) {
+    this.simulator = simulator
+
+    // Remove existing panel if it exists
+    if (this.navigationPanel) {
+      this.navigationPanel.remove()
+    }
+
+    // Create navigation panel container
+    this.navigationPanel = document.createElement('div')
+    this.navigationPanel.id = 'navigation-panel'
+    this.navigationPanel.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 250px;
+      max-height: 80vh;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px;
+      color: white;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    `
+
+    // Create header
+    const header = document.createElement('h3')
+    header.textContent = 'Navigation'
+    header.style.cssText = `
+      margin: 0 0 15px 0;
+      color: #fff;
+      font-size: 16px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    `
+    this.navigationPanel.appendChild(header)
+
+    // Create planets section
+    const planetsSection = this.createSection('Planets', simulator.planetData)
+    this.navigationPanel.appendChild(planetsSection)
+
+    // Create asteroids section (if there are asteroids)
+    if (simulator.asteroids && simulator.asteroids.size > 0) {
+      const asteroidsSection = this.createSection(
+        'Asteroids',
+        simulator.asteroids
+      )
+      this.navigationPanel.appendChild(asteroidsSection)
+    }
+
+    // Add reset camera button
+    const resetButton = document.createElement('button')
+    resetButton.textContent = 'Reset Camera'
+    resetButton.style.cssText = `
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    `
+    resetButton.onclick = () => simulator.resetCamera()
+    this.navigationPanel.appendChild(resetButton)
+
+    // Add to page
+    document.body.appendChild(this.navigationPanel)
+  }
+
+  createSection (title, items) {
+    const section = document.createElement('div')
+    section.style.cssText = `
+      margin-bottom: 20px;
+    `
+
+    const sectionTitle = document.createElement('h4')
+    sectionTitle.textContent = title
+    sectionTitle.style.cssText = `
+      margin: 0 0 10px 0;
+      color: #ccc;
+      font-size: 14px;
+      font-weight: bold;
+    `
+    section.appendChild(sectionTitle)
+
+    // Create scrollable container for items
+    const itemsContainer = document.createElement('div')
+    itemsContainer.style.cssText = `
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+    `
+
+    // Add items
+    if (title === 'Planets') {
+      Object.keys(items).forEach((planetKey) => {
+        const planet = items[planetKey]
+        const button = this.createItemButton(planet.name, planetKey, 'planet')
+        itemsContainer.appendChild(button)
+      })
+    } else if (title === 'Asteroids') {
+      items.forEach((asteroid, asteroidId) => {
+        const button = this.createItemButton(
+          asteroid.name || `Asteroid ${asteroidId}`,
+          asteroidId,
+          'asteroid'
+        )
+        itemsContainer.appendChild(button)
+      })
+    }
+
+    section.appendChild(itemsContainer)
+    return section
+  }
+
+  createItemButton (name, id, type) {
+    const button = document.createElement('button')
+    button.textContent = name
+    button.style.cssText = `
+      width: 100%;
+      padding: 8px 12px;
+      margin: 2px 0;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: left;
+      transition: background 0.2s;
+    `
+
+    button.onmouseover = () => {
+      button.style.background = '#555'
+    }
+
+    button.onmouseout = () => {
+      button.style.background = '#333'
+    }
+
+    button.onclick = () => {
+      if (type === 'planet') {
+        this.simulator.focusCameraOnPlanet(id)
+      } else if (type === 'asteroid') {
+        this.simulator.focusCameraOnAsteroid(
+          this.simulator.asteroids.get(id).mesh
+        )
+      }
+    }
+
+    return button
+  }
+
+  // Update navigation panel with new data
+  updateNavigationPanel () {
+    if (this.navigationPanel && this.simulator) {
+      this.createNavigationPanel(this.simulator)
     }
   }
 }

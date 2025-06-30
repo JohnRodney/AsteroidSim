@@ -1,4 +1,4 @@
-
+Research done by DeepResearch - Gemini 2.5
 
 # **Asteroid Belt Simulator: A Technical Implementation Guide**
 
@@ -10,11 +10,11 @@ This report outlines the technical roadmap for developing a browser-based applic
 
 The foundation of the Asteroid Belt Simulator will be built upon a modern JavaScript-centric full-stack architecture, optimizing for performance, scalability, and developer efficiency.
 
-* **Frontend:** A powerful JavaScript 3D library will handle the browser-based visualization.  
-* **Backend:** Node.js, coupled with the Express.js framework, will manage data acquisition, processing, storage, and real-time communication.  
-* **Database:** PostgreSQL, utilizing its advanced JSONB data type, will provide persistent storage for asteroid data.  
-* **Real-time Communication:** WebSockets will facilitate low-latency, bidirectional communication between the server and clients for dynamic updates.  
-* **Project Structure:** A monorepo approach will be adopted to streamline development and dependency management across the client and server components.
+- **Frontend:** A powerful JavaScript 3D library will handle the browser-based visualization.
+- **Backend:** Node.js, coupled with the Express.js framework, will manage data acquisition, processing, storage, and real-time communication.
+- **Database:** PostgreSQL, utilizing its advanced JSONB data type, will provide persistent storage for asteroid data.
+- **Real-time Communication:** WebSockets will facilitate low-latency, bidirectional communication between the server and clients for dynamic updates.
+- **Project Structure:** A monorepo approach will be adopted to streamline development and dependency management across the client and server components.
 
 The selection of these technologies is predicated on their proven capabilities in handling complex data, facilitating real-time interactions, and supporting efficient 3D rendering within a web environment. The JavaScript ecosystem offers a unified language environment across the full stack, which can significantly enhance developer productivity and code consistency.
 
@@ -48,7 +48,7 @@ Beyond orbital mechanics, understanding the physical characteristics of asteroid
 
 Asteroids vary significantly in size, from less than 10 meters (33 feet) to Vesta, which is approximately 530 kilometers (329 miles) in diameter.12 Direct measurements of asteroid mass and density are available for only a limited number of objects.15 Asterank, however, provides computed or inferred mass and composition data for over 600,000 asteroids, drawing basic physical parameters from the Minor Planet Center and NASA JPL.9 Crucially, mean densities have been calculated for the main asteroid types: C-class at 1.38 g/cm³, S-class at 2.71 g/cm³, and M-class at 5.32 g/cm³.16 While the JPL SBDB API's
 
-phys\_par section can provide some physical parameters, such as absolute magnitude (H), it typically does not offer direct mass or detailed elemental composition for all objects.1
+phys_par section can provide some physical parameters, such as absolute magnitude (H), it typically does not offer direct mass or detailed elemental composition for all objects.1
 
 A significant implication of the available data is that asteroid mass and detailed elemental composition will often need to be derived rather than directly retrieved. As direct mass measurements are scarce 15, the backend logic will need to estimate mass for the vast majority of asteroids. This can be achieved by utilizing the asteroid's estimated diameter (frequently available from sources like Asterank 9 or inferable from absolute magnitude 'H' provided by SBDB 1) and the average density corresponding to its taxonomic classification (C, S, or M-type).16 The database schema should be designed to accommodate both directly provided and calculated values, with clear indicators of the data source for mass.
 
@@ -58,12 +58,12 @@ Furthermore, the distinct compositional classifications offer a direct avenue fo
 
 This table provides concrete data points for implementing mass calculation logic and for visually representing asteroids based on their composition.
 
-| Type | Composition | Mean Density (g/cm³) 16 | Visual Appearance 12 |
-| :---- | :---- | :---- | :---- |
-| C-type | Clay and silicate rocks | 1.38 | Dark |
-| S-type | Silicate materials and nickel-iron | 2.71 | Stony |
-| M-type | Metallic (nickel-iron) | 5.32 | Metallic |
-| *Other* | *e.g., Xk, B, L, Q, O, K, Cb (from Asterank)* | *Inferred/Approximated* | *Varied* |
+| Type    | Composition                                   | Mean Density (g/cm³) 16 | Visual Appearance 12 |
+| :------ | :-------------------------------------------- | :---------------------- | :------------------- |
+| C-type  | Clay and silicate rocks                       | 1.38                    | Dark                 |
+| S-type  | Silicate materials and nickel-iron            | 2.71                    | Stony                |
+| M-type  | Metallic (nickel-iron)                        | 5.32                    | Metallic             |
+| _Other_ | _e.g., Xk, B, L, Q, O, K, Cb (from Asterank)_ | _Inferred/Approximated_ | _Varied_             |
 
 #### **3.3. Total Asteroid Belt Mass**
 
@@ -87,7 +87,7 @@ A significant advantage of this technology stack is the unification of JavaScrip
 
 PostgreSQL, augmented by its JSONB data type, is the recommended database solution for persistent storage of asteroid data. PostgreSQL is a robust relational database known for its strong ACID compliance and its capability to handle structured data with complex queries, making it a common choice in scientific research applications.21 The Minor Planet Center, for instance, makes its PostgreSQL database of observations and orbits available for replication.22
 
-The SBDB API provides a mix of structured orbital elements (e.g., epoch, e, a) and potentially less structured or varying physical parameters (e.g., the phys\_par section).1 While traditional relational tables excel at structured data, the flexibility of PostgreSQL's JSONB type offers a hybrid approach between structured relational databases and flexible document storage.10 JSONB stores data in a binary format, reducing parsing overhead and enabling efficient indexing (e.g., GIN and B-Tree indexes) for fast lookups and filtering.10 This schema flexibility is crucial for managing the diverse and evolving attributes of asteroids without requiring constant schema migrations. For instance, core asteroid identifiers and stable orbital elements can reside in standard relational columns, while dynamic physical properties or ancillary data can be stored in JSONB columns. This design ensures strong relational integrity for core data while providing flexible, performant storage for semi-structured or evolving attributes, supporting efficient querying of nested JSON data through dedicated operators.11
+The SBDB API provides a mix of structured orbital elements (e.g., epoch, e, a) and potentially less structured or varying physical parameters (e.g., the phys_par section).1 While traditional relational tables excel at structured data, the flexibility of PostgreSQL's JSONB type offers a hybrid approach between structured relational databases and flexible document storage.10 JSONB stores data in a binary format, reducing parsing overhead and enabling efficient indexing (e.g., GIN and B-Tree indexes) for fast lookups and filtering.10 This schema flexibility is crucial for managing the diverse and evolving attributes of asteroids without requiring constant schema migrations. For instance, core asteroid identifiers and stable orbital elements can reside in standard relational columns, while dynamic physical properties or ancillary data can be stored in JSONB columns. This design ensures strong relational integrity for core data while providing flexible, performant storage for semi-structured or evolving attributes, supporting efficient querying of nested JSON data through dedicated operators.11
 
 The scalability and performance for large astronomical datasets are also key considerations. With astorb.dat alone being 389 MB uncompressed and Asterank tracking over 600,000 asteroids, the system must efficiently manage a significant volume of complex data.4 While NoSQL databases like MongoDB are often cited for horizontal scaling via sharding and flexibility with diverse data types 21, PostgreSQL with properly indexed JSONB columns can efficiently handle large scientific datasets, particularly for read-heavy workloads characteristic of a simulation. The ability to index JSONB fields ensures that queries for specific asteroid types or properties remain performant even with semi-structured data. For future scaling beyond a single PostgreSQL instance, sharding solutions or a hybrid approach with a dedicated NoSQL store for specific, high-volume, unstructured data could be explored, but JSONB provides a solid and flexible foundation.
 
@@ -95,15 +95,15 @@ The scalability and performance for large astronomical datasets are also key con
 
 This table outlines the proposed database schema, illustrating how diverse orbital and physical data can be efficiently stored.
 
-| Column Name | Data Type | Description | Source/Derivation |
-| :---- | :---- | :---- | :---- |
-| id | TEXT | Primary Key (e.g., SPK-ID from JPL SBDB) | JPL SBDB 1 |
-| designation | TEXT | Primary designation of the asteroid | JPL SBDB 1 |
-| name | TEXT | Common name of the asteroid (if any) | JPL SBDB 1 |
-| orbit\_class | TEXT | Orbital classification (e.g., 'Main-belt Asteroid') | JPL SBDB 1 |
-| orbital\_elements | JSONB | Stores osculating orbital elements (e, q, tp, om, w, i, a, ma, per, n, ad, epoch, etc.) | JPL SBDB 1 |
-| physical\_properties | JSONB | Stores diameter, absolute magnitude (H), composition type, derived density, derived mass, etc. | Asterank 9, NASA Facts 12, Asteroid Densities 16, JPL SBDB 1 |
-| last\_updated | TIMESTAMP | Timestamp of last data update from external APIs | Internal tracking |
+| Column Name         | Data Type | Description                                                                                    | Source/Derivation                                            |
+| :------------------ | :-------- | :--------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| id                  | TEXT      | Primary Key (e.g., SPK-ID from JPL SBDB)                                                       | JPL SBDB 1                                                   |
+| designation         | TEXT      | Primary designation of the asteroid                                                            | JPL SBDB 1                                                   |
+| name                | TEXT      | Common name of the asteroid (if any)                                                           | JPL SBDB 1                                                   |
+| orbit_class         | TEXT      | Orbital classification (e.g., 'Main-belt Asteroid')                                            | JPL SBDB 1                                                   |
+| orbital_elements    | JSONB     | Stores osculating orbital elements (e, q, tp, om, w, i, a, ma, per, n, ad, epoch, etc.)        | JPL SBDB 1                                                   |
+| physical_properties | JSONB     | Stores diameter, absolute magnitude (H), composition type, derived density, derived mass, etc. | Asterank 9, NASA Facts 12, Asteroid Densities 16, JPL SBDB 1 |
+| last_updated        | TIMESTAMP | Timestamp of last data update from external APIs                                               | Internal tracking                                            |
 
 #### **4.3. API Endpoints for Data Access**
 
@@ -137,15 +137,15 @@ While both libraries are highly capable, Babylon.js appears to offer more explic
 
 This table provides a concise overview of the core technologies selected for each layer of the application.
 
-| Component | Primary Technology | Alternatives/Supplementary | Rationale |
-| :---- | :---- | :---- | :---- |
-| **Frontend 3D Library** | Babylon.js | Three.js | Optimized for dynamic scenes, instancing 31 |
-| **Backend Framework** | Node.js (Express.js) | \- | JavaScript unification, API development 19 |
-| **Database** | PostgreSQL (with JSONB) | MongoDB | Hybrid data model, scalable for scientific data 10 |
-| **Real-time Communication** | ws | Socket.IO | Low-latency, high-performance for simulation data 26 |
-| **Orbital Data API** | JPL SBDB API | JPL Horizons API, Lowell astorb.dat | High-precision, programmatic access 1 |
-| **Physical Data Source** | Asterank, NASA Facts | \- | Inferred mass/composition, general properties 9 |
-| **3D Assets** | AmbientCG, Poly Haven, Sketchfab, NASA 3D Resources | \- | Free, programmatic access to models/textures 35 |
+| Component                   | Primary Technology                                  | Alternatives/Supplementary          | Rationale                                            |
+| :-------------------------- | :-------------------------------------------------- | :---------------------------------- | :--------------------------------------------------- |
+| **Frontend 3D Library**     | Babylon.js                                          | Three.js                            | Optimized for dynamic scenes, instancing 31          |
+| **Backend Framework**       | Node.js (Express.js)                                | \-                                  | JavaScript unification, API development 19           |
+| **Database**                | PostgreSQL (with JSONB)                             | MongoDB                             | Hybrid data model, scalable for scientific data 10   |
+| **Real-time Communication** | ws                                                  | Socket.IO                           | Low-latency, high-performance for simulation data 26 |
+| **Orbital Data API**        | JPL SBDB API                                        | JPL Horizons API, Lowell astorb.dat | High-precision, programmatic access 1                |
+| **Physical Data Source**    | Asterank, NASA Facts                                | \-                                  | Inferred mass/composition, general properties 9      |
+| **3D Assets**               | AmbientCG, Poly Haven, Sketchfab, NASA 3D Resources | \-                                  | Free, programmatic access to models/textures 35      |
 
 #### **5.2. Loading 3D Models and Textures**
 
@@ -171,13 +171,13 @@ orbits.js specifically supports Keplerian elements, the solution of Kepler's equ
 
 This table maps the required data points for the simulation to their specific sources and derivation methods, providing a clear reference for data acquisition and integration.
 
-| Data Point | Source / Derivation Method |
-| :---- | :---- |
-| Position (x, y, z) | Derived from Orbital Elements (JPL SBDB 1) \+ Backend Propagation (Kepler's equations/JS library 6) |
-| Velocity (vx, vy, vz) | Derived from Orbital Elements (JPL SBDB 1) \+ Backend Propagation |
-| Elemental Composition | Inferred from Taxonomic Type (Asterank 9, NASA Facts 12, Spectral Data 13) |
-| Individual Mass | Inferred from Diameter & Density (Asterank 9, NASA Facts 12, Asteroid Densities 15) |
-| Total Asteroid Belt Mass | Established Estimates (Wikipedia 17, Reddit 18) |
+| Data Point               | Source / Derivation Method                                                                          |
+| :----------------------- | :-------------------------------------------------------------------------------------------------- |
+| Position (x, y, z)       | Derived from Orbital Elements (JPL SBDB 1) \+ Backend Propagation (Kepler's equations/JS library 6) |
+| Velocity (vx, vy, vz)    | Derived from Orbital Elements (JPL SBDB 1) \+ Backend Propagation                                   |
+| Elemental Composition    | Inferred from Taxonomic Type (Asterank 9, NASA Facts 12, Spectral Data 13)                          |
+| Individual Mass          | Inferred from Diameter & Density (Asterank 9, NASA Facts 12, Asteroid Densities 15)                 |
+| Total Asteroid Belt Mass | Established Estimates (Wikipedia 17, Reddit 18)                                                     |
 
 #### **5.4. Dynamic Updates and Performance Optimization**
 
@@ -197,11 +197,11 @@ Beyond the core 3D rendering, a well-designed user interface (UI) is essential f
 
 Key interactive elements could include:
 
-* **Information Overlays:** Upon clicking or hovering over an asteroid, a dynamic overlay should display its specific orbital parameters (position, velocity), estimated mass, and elemental composition type.  
-* **Time Control:** Users should have intuitive controls to manipulate the simulation's progression, including play/pause functionality, adjustable playback speed (speed up/slow down), and the ability to jump to a specific date or time.  
-* **Filtering and Highlighting:** Features allowing users to filter asteroids by their compositional type (C, S, or M) or size, or to highlight the largest and most significant asteroids (Ceres, Vesta, Pallas, Hygiea), would enhance exploration.  
-* **Total Mass Display:** A persistent overlay or dashboard element should dynamically display the calculated total mass of the currently simulated asteroids, providing a comparison to the known total mass of the asteroid belt.  
-* **Camera Controls:** Intuitive camera controls for orbiting, panning, and zooming within the 3D scene are fundamental for effective navigation and exploration of the asteroid belt.
+- **Information Overlays:** Upon clicking or hovering over an asteroid, a dynamic overlay should display its specific orbital parameters (position, velocity), estimated mass, and elemental composition type.
+- **Time Control:** Users should have intuitive controls to manipulate the simulation's progression, including play/pause functionality, adjustable playback speed (speed up/slow down), and the ability to jump to a specific date or time.
+- **Filtering and Highlighting:** Features allowing users to filter asteroids by their compositional type (C, S, or M) or size, or to highlight the largest and most significant asteroids (Ceres, Vesta, Pallas, Hygiea), would enhance exploration.
+- **Total Mass Display:** A persistent overlay or dashboard element should dynamically display the calculated total mass of the currently simulated asteroids, providing a comparison to the known total mass of the asteroid belt.
+- **Camera Controls:** Intuitive camera controls for orbiting, panning, and zooming within the 3D scene are fundamental for effective navigation and exploration of the asteroid belt.
 
 ### **6\. Project Structure and Best Practices**
 
@@ -213,10 +213,10 @@ pnpm workspaces 56, ensures type safety and consistency across the entire applic
 
 Proactive dependency management is also paramount. The application will rely on numerous external libraries for 3D rendering, astrodynamics, database interaction, and real-time communication. To ensure security and maintainability, it is essential to:
 
-* **Version Pinning:** Specify exact versions of all dependencies in package.json and commit corresponding lock files (e.g., package-lock.json or pnpm-lock.yaml) to the version control system. This ensures predictable builds and reproducible behavior across different development environments.57  
-* **Regular Updates:** Establish a routine for regularly updating dependencies to their newest validated releases. This practice is crucial for fortifying the project against known vulnerabilities, addressing licensing changes, and avoiding technical debt that accumulates when dependencies become severely outdated.57  
-* **Automated Checks:** Integrate automated dependency checks (e.g., npm audit or tools like Dependency-Check) into a Continuous Integration/Continuous Deployment (CI/CD) pipeline. This allows for proactive detection and mitigation of security risks related to third-party dependencies.57  
-* **Package Isolation:** Avoid installing dependencies globally or system-wide. Instead, rely on the default package isolation mechanisms provided by Node.js package managers (e.g., node\_modules local to the project) to ensure each project has its own isolated set of dependencies, preventing conflicts and ensuring consistent behavior.57
+- **Version Pinning:** Specify exact versions of all dependencies in package.json and commit corresponding lock files (e.g., package-lock.json or pnpm-lock.yaml) to the version control system. This ensures predictable builds and reproducible behavior across different development environments.57
+- **Regular Updates:** Establish a routine for regularly updating dependencies to their newest validated releases. This practice is crucial for fortifying the project against known vulnerabilities, addressing licensing changes, and avoiding technical debt that accumulates when dependencies become severely outdated.57
+- **Automated Checks:** Integrate automated dependency checks (e.g., npm audit or tools like Dependency-Check) into a Continuous Integration/Continuous Deployment (CI/CD) pipeline. This allows for proactive detection and mitigation of security risks related to third-party dependencies.57
+- **Package Isolation:** Avoid installing dependencies globally or system-wide. Instead, rely on the default package isolation mechanisms provided by Node.js package managers (e.g., node_modules local to the project) to ensure each project has its own isolated set of dependencies, preventing conflicts and ensuring consistent behavior.57
 
 ### **7\. Deployment Considerations**
 
@@ -234,66 +234,66 @@ Expanding scientific depth could involve moving beyond the simplified two-body p
 
 Enhancing visualization fidelity could involve implementing advanced rendering techniques for asteroid rotation, light scattering effects, or even simulating asteroid-mining scenarios, drawing inspiration from economic data sources like Asterank.9 Displaying additional data, such as close-approach data (
 
-ca\_data) or virtual impactor (vi\_data) information from the JPL SBDB API 1, or highlighting Potentially Hazardous Asteroids (PHAs) 12, would add critical real-world relevance. Furthermore, the application could overlay data such as asteroid families, orbital resonances, or even hypothetical asteroid mining claims, providing a richer contextual understanding of the asteroid belt environment. These enhancements would transform the simulator into a more comprehensive and interactive tool for astronomical education and research.
+ca_data) or virtual impactor (vi_data) information from the JPL SBDB API 1, or highlighting Potentially Hazardous Asteroids (PHAs) 12, would add critical real-world relevance. Furthermore, the application could overlay data such as asteroid families, orbital resonances, or even hypothetical asteroid mining claims, providing a richer contextual understanding of the asteroid belt environment. These enhancements would transform the simulator into a more comprehensive and interactive tool for astronomical education and research.
 
 #### **Works cited**
 
-1. SBDB API \- jpl ssd/cneos api \- NASA, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/sbdb.html](https://ssd-api.jpl.nasa.gov/doc/sbdb.html)  
-2. Horizon API, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/horizons.html](https://ssd-api.jpl.nasa.gov/doc/horizons.html)  
-3. Horizons File API \- ssd-api@jpl.nasa.gov, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/horizons\_file.html](https://ssd-api.jpl.nasa.gov/doc/horizons_file.html)  
-4. The Asteroid Orbital Elements Database | Lowell Observatory ..., accessed June 29, 2025, [https://asteroid.lowell.edu/astorb/](https://asteroid.lowell.edu/astorb/)  
-5. Exploring NASA API: Creating Data-Rich Applications | Zuplo Blog, accessed June 29, 2025, [https://zuplo.com/blog/2025/03/18/nasa-api](https://zuplo.com/blog/2025/03/18/nasa-api)  
-6. Determining orbital position at a future point in time \- Space Exploration Stack Exchange, accessed June 29, 2025, [https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time](https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time)  
-7. orbits.js | Javascript library for positional astronomy \- GitHub Pages, accessed June 29, 2025, [https://vsr83.github.io/orbits.js/](https://vsr83.github.io/orbits.js/)  
-8. shashwatak/satellite-js: Modular set of functions for SGP4 and SDP4 propagation of TLE and OMM. \- GitHub, accessed June 29, 2025, [https://github.com/shashwatak/satellite-js](https://github.com/shashwatak/satellite-js)  
-9. Asterank: Asteroid Database and Mining Rankings, accessed June 29, 2025, [https://www.asterank.com/](https://www.asterank.com/)  
-10. PostgreSQL JSONB – Powerful Storage for Semi-Structured Data \- Peerlist, accessed June 29, 2025, [https://peerlist.io/saxenashikhil/articles/postgresql-jsonb--powerful-storage-for-semistructured-data](https://peerlist.io/saxenashikhil/articles/postgresql-jsonb--powerful-storage-for-semistructured-data)  
-11. An Unnecessary article on JSON and JSONB data type and their usage in PostgreSQL | by S M Shahinul Islam | Medium, accessed June 29, 2025, [https://medium.com/@s.m.shahinul.islam/an-unnecessary-article-on-json-and-jsonb-data-type-and-their-usage-in-postgresql-a46284e23adf](https://medium.com/@s.m.shahinul.islam/an-unnecessary-article-on-json-and-jsonb-data-type-and-their-usage-in-postgresql-a46284e23adf)  
-12. Asteroid Facts \- NASA Science, accessed June 29, 2025, [https://science.nasa.gov/solar-system/asteroids/facts/](https://science.nasa.gov/solar-system/asteroids/facts/)  
-13. (PDF) A machine learning classification of meteorite spectra applied to understanding asteroids \- ResearchGate, accessed June 29, 2025, [https://www.researchgate.net/publication/372630232\_A\_machine\_learning\_classification\_of\_meteorite\_spectra\_applied\_to\_understanding\_asteroids](https://www.researchgate.net/publication/372630232_A_machine_learning_classification_of_meteorite_spectra_applied_to_understanding_asteroids)  
-14. Neighboring Discriminant Component Analysis for Asteroid Spectrum Classification \- MDPI, accessed June 29, 2025, [https://www.mdpi.com/2072-4292/13/16/3306](https://www.mdpi.com/2072-4292/13/16/3306)  
-15. Asteroid densities | Center for Astrostatistics \- Sites at Penn State, accessed June 29, 2025, [https://sites.psu.edu/astrostatistics/datasets-asteroid-densities/](https://sites.psu.edu/astrostatistics/datasets-asteroid-densities/)  
-16. Standard asteroid physical characteristics \- Wikipedia, accessed June 29, 2025, [https://en.wikipedia.org/wiki/Standard\_asteroid\_physical\_characteristics](https://en.wikipedia.org/wiki/Standard_asteroid_physical_characteristics)  
-17. en.wikipedia.org, accessed June 29, 2025, [https://en.wikipedia.org/wiki/Asteroid\_belt\#:\~:text=be%20even%20closer.-,The%20total%20mass%20of%20the%20asteroid%20belt%20is%20estimated%20to,accounted%20for%20by%20Ceres%20alone.](https://en.wikipedia.org/wiki/Asteroid_belt#:~:text=be%20even%20closer.-,The%20total%20mass%20of%20the%20asteroid%20belt%20is%20estimated%20to,accounted%20for%20by%20Ceres%20alone.)  
-18. How big is the Asteroid Belt and how did it form? : r/askscience \- Reddit, accessed June 29, 2025, [https://www.reddit.com/r/askscience/comments/4chi7m/how\_big\_is\_the\_asteroid\_belt\_and\_how\_did\_it\_form/](https://www.reddit.com/r/askscience/comments/4chi7m/how_big_is_the_asteroid_belt_and_how_did_it_form/)  
-19. Introduction to the server side \- Learn web development | MDN, accessed June 29, 2025, [https://developer.mozilla.org/en-US/docs/Learn\_web\_development/Extensions/Server-side/First\_steps/Introduction](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction)  
-20. MEAN and MERN Stacks: Full Stack JavaScript Development Expl \- AltexSoft, accessed June 29, 2025, [https://www.altexsoft.com/blog/mean-mern-javascript-full-stack/](https://www.altexsoft.com/blog/mean-mern-javascript-full-stack/)  
-21. PostgreSQL vs. MongoDB: Differences, Strengths, and Use Cases | Estuary, accessed June 29, 2025, [https://estuary.dev/blog/postgresql-vs-mongodb/](https://estuary.dev/blog/postgresql-vs-mongodb/)  
-22. DeprecatedMPC Database Tables Schema \- Minor Planet Center, accessed June 29, 2025, [https://data.minorplanetcenter.net/postgres-schema/schema.html](https://data.minorplanetcenter.net/postgres-schema/schema.html)  
-23. Comparing MongoDB vs PostgreSQL, accessed June 29, 2025, [https://www.mongodb.com/resources/compare/mongodb-postgresql](https://www.mongodb.com/resources/compare/mongodb-postgresql)  
-24. Mastering Real-Time Communication: A Comprehensive WebSocket Tutorial \- Medium, accessed June 29, 2025, [https://medium.com/@sergey.dudik/mastering-real-time-communication-a-comprehensive-websocket-tutorial-0f6cf384d1e8](https://medium.com/@sergey.dudik/mastering-real-time-communication-a-comprehensive-websocket-tutorial-0f6cf384d1e8)  
-25. 8 best WebSocket libraries for Node \- Ably Realtime, accessed June 29, 2025, [https://ably.com/blog/websocket-libraries-for-node](https://ably.com/blog/websocket-libraries-for-node)  
-26. WebSocket vs Socket.IO: Performance & Use Case Guide \- Ably Realtime, accessed June 29, 2025, [https://ably.com/topic/socketio-vs-websocket](https://ably.com/topic/socketio-vs-websocket)  
-27. Node.js \+ WebSockets: When to Use ws vs socket.io (And Why We Switched), accessed June 29, 2025, [https://dev.to/alex\_aslam/nodejs-websockets-when-to-use-ws-vs-socketio-and-why-we-switched-di9](https://dev.to/alex_aslam/nodejs-websockets-when-to-use-ws-vs-socketio-and-why-we-switched-di9)  
-28. Socket. IO vs. WebSocket: Keys Differences \- Apidog, accessed June 29, 2025, [https://apidog.com/articles/socket-io-vs-websocket/](https://apidog.com/articles/socket-io-vs-websocket/)  
-29. Everything You Need to Know When Assessing Server-side Languages Skills, accessed June 29, 2025, [https://www.alooba.com/skills/programming-languages/back-end-development-359/server-side-languages/](https://www.alooba.com/skills/programming-languages/back-end-development-359/server-side-languages/)  
-30. Three.js – JavaScript 3D Library, accessed June 29, 2025, [https://threejs.org/](https://threejs.org/)  
-31. Babylon.js: Powerful, Beautiful, Simple, Open \- Web-Based 3D At Its Best, accessed June 29, 2025, [https://www.babylonjs.com/](https://www.babylonjs.com/)  
-32. Specifications \- Babylon.js, accessed June 29, 2025, [https://www.babylonjs.com/specifications/](https://www.babylonjs.com/specifications/)  
-33. Instances | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/mesh/copies/instances](https://doc.babylonjs.com/features/featuresDeepDive/mesh/copies/instances)  
-34. Optimizing Your Scene | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/scene/optimize\_your\_scene](https://doc.babylonjs.com/features/featuresDeepDive/scene/optimize_your_scene)  
-35. ambientCG \- Free Textures, HDRIs and Models, accessed June 29, 2025, [https://ambientcg.com/](https://ambientcg.com/)  
-36. (Sketchfab) API Overview \- Sign in to Your Epic Games account, accessed June 29, 2025, [https://support.fab.com/s/article/API-Overview](https://support.fab.com/s/article/API-Overview)  
-37. Home | 3D Resources \- NASA, accessed June 29, 2025, [https://nasa3d.arc.nasa.gov/](https://nasa3d.arc.nasa.gov/)  
-38. About the API \- ambientCG Docs, accessed June 29, 2025, [https://docs.ambientcg.com/api/](https://docs.ambientcg.com/api/)  
-39. full\_json \- ambientCG Docs, accessed June 29, 2025, [https://docs.ambientcg.com/api/v1/full\_json/](https://docs.ambientcg.com/api/v1/full_json/)  
-40. Share Textures: CC0 Textures & Models, accessed June 29, 2025, [https://www.sharetextures.com/](https://www.sharetextures.com/)  
-41. Free 3D Models by Poly Haven \- Cgtips.org, accessed June 29, 2025, [https://cgtips.org/free-3d-models-by-poly-haven/](https://cgtips.org/free-3d-models-by-poly-haven/)  
-42. Models \- Poly Haven, accessed June 29, 2025, [https://polyhaven.com/models](https://polyhaven.com/models)  
-43. Download Free 3D Models \- Royalty Free \- Sketchfab, accessed June 29, 2025, [https://sketchfab.com/features/free-3d-models](https://sketchfab.com/features/free-3d-models)  
-44. Load 3D Models in glTF Format \- Discover three.js\!, accessed June 29, 2025, [https://discoverthreejs.com/book/first-steps/load-models/](https://discoverthreejs.com/book/first-steps/load-models/)  
-45. GLTFLoader – three.js docs, accessed June 29, 2025, [https://threejs.org/docs/examples/en/loaders/GLTFLoader.html](https://threejs.org/docs/examples/en/loaders/GLTFLoader.html)  
-46. .obj File Loader Plugin | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/importers/oBJ](https://doc.babylonjs.com/features/featuresDeepDive/importers/oBJ)  
-47. GLTF/obj structure and modifying object loaded \- Questions \- Babylon JS Forum, accessed June 29, 2025, [https://forum.babylonjs.com/t/gltf-obj-structure-and-modifying-object-loaded/21932](https://forum.babylonjs.com/t/gltf-obj-structure-and-modifying-object-loaded/21932)  
-48. Building Efficient Three.js Scenes: Optimize Performance While Maintaining Quality, accessed June 29, 2025, [https://tympanus.net/codrops/2025/02/11/building-efficient-three-js-scenes-optimize-performance-while-maintaining-quality/](https://tympanus.net/codrops/2025/02/11/building-efficient-three-js-scenes-optimize-performance-while-maintaining-quality/)  
-49. Chapter 6 – Kepler's Prediction Problem – Introduction to Orbital Mechanics, accessed June 29, 2025, [https://colorado.pressbooks.pub/introorbitalmechanics/chapter/chapter-6-keplers-prediction-problem/](https://colorado.pressbooks.pub/introorbitalmechanics/chapter/chapter-6-keplers-prediction-problem/)  
-50. Examples \- Three.js, accessed June 29, 2025, [https://threejs.org/examples/](https://threejs.org/examples/)  
-51. Dynamic reflections in Three.js \- Pierfrancesco Soffritti \- Medium, accessed June 29, 2025, [https://pierfrancesco-soffritti.medium.com/dynamic-reflections-in-three-js-2d46f3378fc4](https://pierfrancesco-soffritti.medium.com/dynamic-reflections-in-three-js-2d46f3378fc4)  
-52. Mesh \- Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/typedoc/classes/BABYLON.Mesh](https://doc.babylonjs.com/typedoc/classes/BABYLON.Mesh)  
-53. Dynamically Morph A Mesh | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/mesh/dynamicMeshMorph/](https://doc.babylonjs.com/features/featuresDeepDive/mesh/dynamicMeshMorph/)  
-54. Monorepos vs. Polyrepos: Which one fits your use case? \- LogRocket Blog, accessed June 29, 2025, [https://blog.logrocket.com/monorepos-vs-polyrepos-which-one-fits-your-use-case/](https://blog.logrocket.com/monorepos-vs-polyrepos-which-one-fits-your-use-case/)  
-55. Choose Monorepo or Polyrepo for Your Project: An In-Depth Analysis \- Medium, accessed June 29, 2025, [https://medium.com/tuanhdotnet/choose-monorepo-or-polyrepo-for-your-project-an-in-depth-analysis-1b61fdd93a09](https://medium.com/tuanhdotnet/choose-monorepo-or-polyrepo-for-your-project-an-in-depth-analysis-1b61fdd93a09)  
-56. A Simple Monorepo Setup with Next.js and Express.js | by Serdar Ulutas \- Medium, accessed June 29, 2025, [https://medium.com/@serdar.ulutas/a-simple-monorepo-setup-with-next-js-and-express-js-4bbe0e99b259](https://medium.com/@serdar.ulutas/a-simple-monorepo-setup-with-next-js-and-express-js-4bbe0e99b259)  
-57. Best Practices for Dependency Management \- tss-yonder.com, accessed June 29, 2025, [https://tss-yonder.com/insights/best-practices-for-dependency-management](https://tss-yonder.com/insights/best-practices-for-dependency-management)  
-58. Fullstack applications \- Reference Architecture \- Cloudflare Docs, accessed June 29, 2025, [https://developers.cloudflare.com/reference-architecture/diagrams/serverless/fullstack-application/](https://developers.cloudflare.com/reference-architecture/diagrams/serverless/fullstack-application/)  
+1. SBDB API \- jpl ssd/cneos api \- NASA, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/sbdb.html](https://ssd-api.jpl.nasa.gov/doc/sbdb.html)
+2. Horizon API, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/horizons.html](https://ssd-api.jpl.nasa.gov/doc/horizons.html)
+3. Horizons File API \- ssd-api@jpl.nasa.gov, accessed June 29, 2025, [https://ssd-api.jpl.nasa.gov/doc/horizons_file.html](https://ssd-api.jpl.nasa.gov/doc/horizons_file.html)
+4. The Asteroid Orbital Elements Database | Lowell Observatory ..., accessed June 29, 2025, [https://asteroid.lowell.edu/astorb/](https://asteroid.lowell.edu/astorb/)
+5. Exploring NASA API: Creating Data-Rich Applications | Zuplo Blog, accessed June 29, 2025, [https://zuplo.com/blog/2025/03/18/nasa-api](https://zuplo.com/blog/2025/03/18/nasa-api)
+6. Determining orbital position at a future point in time \- Space Exploration Stack Exchange, accessed June 29, 2025, [https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time](https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time)
+7. orbits.js | Javascript library for positional astronomy \- GitHub Pages, accessed June 29, 2025, [https://vsr83.github.io/orbits.js/](https://vsr83.github.io/orbits.js/)
+8. shashwatak/satellite-js: Modular set of functions for SGP4 and SDP4 propagation of TLE and OMM. \- GitHub, accessed June 29, 2025, [https://github.com/shashwatak/satellite-js](https://github.com/shashwatak/satellite-js)
+9. Asterank: Asteroid Database and Mining Rankings, accessed June 29, 2025, [https://www.asterank.com/](https://www.asterank.com/)
+10. PostgreSQL JSONB – Powerful Storage for Semi-Structured Data \- Peerlist, accessed June 29, 2025, [https://peerlist.io/saxenashikhil/articles/postgresql-jsonb--powerful-storage-for-semistructured-data](https://peerlist.io/saxenashikhil/articles/postgresql-jsonb--powerful-storage-for-semistructured-data)
+11. An Unnecessary article on JSON and JSONB data type and their usage in PostgreSQL | by S M Shahinul Islam | Medium, accessed June 29, 2025, [https://medium.com/@s.m.shahinul.islam/an-unnecessary-article-on-json-and-jsonb-data-type-and-their-usage-in-postgresql-a46284e23adf](https://medium.com/@s.m.shahinul.islam/an-unnecessary-article-on-json-and-jsonb-data-type-and-their-usage-in-postgresql-a46284e23adf)
+12. Asteroid Facts \- NASA Science, accessed June 29, 2025, [https://science.nasa.gov/solar-system/asteroids/facts/](https://science.nasa.gov/solar-system/asteroids/facts/)
+13. (PDF) A machine learning classification of meteorite spectra applied to understanding asteroids \- ResearchGate, accessed June 29, 2025, [https://www.researchgate.net/publication/372630232_A_machine_learning_classification_of_meteorite_spectra_applied_to_understanding_asteroids](https://www.researchgate.net/publication/372630232_A_machine_learning_classification_of_meteorite_spectra_applied_to_understanding_asteroids)
+14. Neighboring Discriminant Component Analysis for Asteroid Spectrum Classification \- MDPI, accessed June 29, 2025, [https://www.mdpi.com/2072-4292/13/16/3306](https://www.mdpi.com/2072-4292/13/16/3306)
+15. Asteroid densities | Center for Astrostatistics \- Sites at Penn State, accessed June 29, 2025, [https://sites.psu.edu/astrostatistics/datasets-asteroid-densities/](https://sites.psu.edu/astrostatistics/datasets-asteroid-densities/)
+16. Standard asteroid physical characteristics \- Wikipedia, accessed June 29, 2025, [https://en.wikipedia.org/wiki/Standard_asteroid_physical_characteristics](https://en.wikipedia.org/wiki/Standard_asteroid_physical_characteristics)
+17. en.wikipedia.org, accessed June 29, 2025, [https://en.wikipedia.org/wiki/Asteroid_belt\#:\~:text=be%20even%20closer.-,The%20total%20mass%20of%20the%20asteroid%20belt%20is%20estimated%20to,accounted%20for%20by%20Ceres%20alone.](https://en.wikipedia.org/wiki/Asteroid_belt#:~:text=be%20even%20closer.-,The%20total%20mass%20of%20the%20asteroid%20belt%20is%20estimated%20to,accounted%20for%20by%20Ceres%20alone.)
+18. How big is the Asteroid Belt and how did it form? : r/askscience \- Reddit, accessed June 29, 2025, [https://www.reddit.com/r/askscience/comments/4chi7m/how_big_is_the_asteroid_belt_and_how_did_it_form/](https://www.reddit.com/r/askscience/comments/4chi7m/how_big_is_the_asteroid_belt_and_how_did_it_form/)
+19. Introduction to the server side \- Learn web development | MDN, accessed June 29, 2025, [https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction)
+20. MEAN and MERN Stacks: Full Stack JavaScript Development Expl \- AltexSoft, accessed June 29, 2025, [https://www.altexsoft.com/blog/mean-mern-javascript-full-stack/](https://www.altexsoft.com/blog/mean-mern-javascript-full-stack/)
+21. PostgreSQL vs. MongoDB: Differences, Strengths, and Use Cases | Estuary, accessed June 29, 2025, [https://estuary.dev/blog/postgresql-vs-mongodb/](https://estuary.dev/blog/postgresql-vs-mongodb/)
+22. DeprecatedMPC Database Tables Schema \- Minor Planet Center, accessed June 29, 2025, [https://data.minorplanetcenter.net/postgres-schema/schema.html](https://data.minorplanetcenter.net/postgres-schema/schema.html)
+23. Comparing MongoDB vs PostgreSQL, accessed June 29, 2025, [https://www.mongodb.com/resources/compare/mongodb-postgresql](https://www.mongodb.com/resources/compare/mongodb-postgresql)
+24. Mastering Real-Time Communication: A Comprehensive WebSocket Tutorial \- Medium, accessed June 29, 2025, [https://medium.com/@sergey.dudik/mastering-real-time-communication-a-comprehensive-websocket-tutorial-0f6cf384d1e8](https://medium.com/@sergey.dudik/mastering-real-time-communication-a-comprehensive-websocket-tutorial-0f6cf384d1e8)
+25. 8 best WebSocket libraries for Node \- Ably Realtime, accessed June 29, 2025, [https://ably.com/blog/websocket-libraries-for-node](https://ably.com/blog/websocket-libraries-for-node)
+26. WebSocket vs Socket.IO: Performance & Use Case Guide \- Ably Realtime, accessed June 29, 2025, [https://ably.com/topic/socketio-vs-websocket](https://ably.com/topic/socketio-vs-websocket)
+27. Node.js \+ WebSockets: When to Use ws vs socket.io (And Why We Switched), accessed June 29, 2025, [https://dev.to/alex_aslam/nodejs-websockets-when-to-use-ws-vs-socketio-and-why-we-switched-di9](https://dev.to/alex_aslam/nodejs-websockets-when-to-use-ws-vs-socketio-and-why-we-switched-di9)
+28. Socket. IO vs. WebSocket: Keys Differences \- Apidog, accessed June 29, 2025, [https://apidog.com/articles/socket-io-vs-websocket/](https://apidog.com/articles/socket-io-vs-websocket/)
+29. Everything You Need to Know When Assessing Server-side Languages Skills, accessed June 29, 2025, [https://www.alooba.com/skills/programming-languages/back-end-development-359/server-side-languages/](https://www.alooba.com/skills/programming-languages/back-end-development-359/server-side-languages/)
+30. Three.js – JavaScript 3D Library, accessed June 29, 2025, [https://threejs.org/](https://threejs.org/)
+31. Babylon.js: Powerful, Beautiful, Simple, Open \- Web-Based 3D At Its Best, accessed June 29, 2025, [https://www.babylonjs.com/](https://www.babylonjs.com/)
+32. Specifications \- Babylon.js, accessed June 29, 2025, [https://www.babylonjs.com/specifications/](https://www.babylonjs.com/specifications/)
+33. Instances | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/mesh/copies/instances](https://doc.babylonjs.com/features/featuresDeepDive/mesh/copies/instances)
+34. Optimizing Your Scene | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/scene/optimize_your_scene](https://doc.babylonjs.com/features/featuresDeepDive/scene/optimize_your_scene)
+35. ambientCG \- Free Textures, HDRIs and Models, accessed June 29, 2025, [https://ambientcg.com/](https://ambientcg.com/)
+36. (Sketchfab) API Overview \- Sign in to Your Epic Games account, accessed June 29, 2025, [https://support.fab.com/s/article/API-Overview](https://support.fab.com/s/article/API-Overview)
+37. Home | 3D Resources \- NASA, accessed June 29, 2025, [https://nasa3d.arc.nasa.gov/](https://nasa3d.arc.nasa.gov/)
+38. About the API \- ambientCG Docs, accessed June 29, 2025, [https://docs.ambientcg.com/api/](https://docs.ambientcg.com/api/)
+39. full_json \- ambientCG Docs, accessed June 29, 2025, [https://docs.ambientcg.com/api/v1/full_json/](https://docs.ambientcg.com/api/v1/full_json/)
+40. Share Textures: CC0 Textures & Models, accessed June 29, 2025, [https://www.sharetextures.com/](https://www.sharetextures.com/)
+41. Free 3D Models by Poly Haven \- Cgtips.org, accessed June 29, 2025, [https://cgtips.org/free-3d-models-by-poly-haven/](https://cgtips.org/free-3d-models-by-poly-haven/)
+42. Models \- Poly Haven, accessed June 29, 2025, [https://polyhaven.com/models](https://polyhaven.com/models)
+43. Download Free 3D Models \- Royalty Free \- Sketchfab, accessed June 29, 2025, [https://sketchfab.com/features/free-3d-models](https://sketchfab.com/features/free-3d-models)
+44. Load 3D Models in glTF Format \- Discover three.js\!, accessed June 29, 2025, [https://discoverthreejs.com/book/first-steps/load-models/](https://discoverthreejs.com/book/first-steps/load-models/)
+45. GLTFLoader – three.js docs, accessed June 29, 2025, [https://threejs.org/docs/examples/en/loaders/GLTFLoader.html](https://threejs.org/docs/examples/en/loaders/GLTFLoader.html)
+46. .obj File Loader Plugin | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/importers/oBJ](https://doc.babylonjs.com/features/featuresDeepDive/importers/oBJ)
+47. GLTF/obj structure and modifying object loaded \- Questions \- Babylon JS Forum, accessed June 29, 2025, [https://forum.babylonjs.com/t/gltf-obj-structure-and-modifying-object-loaded/21932](https://forum.babylonjs.com/t/gltf-obj-structure-and-modifying-object-loaded/21932)
+48. Building Efficient Three.js Scenes: Optimize Performance While Maintaining Quality, accessed June 29, 2025, [https://tympanus.net/codrops/2025/02/11/building-efficient-three-js-scenes-optimize-performance-while-maintaining-quality/](https://tympanus.net/codrops/2025/02/11/building-efficient-three-js-scenes-optimize-performance-while-maintaining-quality/)
+49. Chapter 6 – Kepler's Prediction Problem – Introduction to Orbital Mechanics, accessed June 29, 2025, [https://colorado.pressbooks.pub/introorbitalmechanics/chapter/chapter-6-keplers-prediction-problem/](https://colorado.pressbooks.pub/introorbitalmechanics/chapter/chapter-6-keplers-prediction-problem/)
+50. Examples \- Three.js, accessed June 29, 2025, [https://threejs.org/examples/](https://threejs.org/examples/)
+51. Dynamic reflections in Three.js \- Pierfrancesco Soffritti \- Medium, accessed June 29, 2025, [https://pierfrancesco-soffritti.medium.com/dynamic-reflections-in-three-js-2d46f3378fc4](https://pierfrancesco-soffritti.medium.com/dynamic-reflections-in-three-js-2d46f3378fc4)
+52. Mesh \- Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/typedoc/classes/BABYLON.Mesh](https://doc.babylonjs.com/typedoc/classes/BABYLON.Mesh)
+53. Dynamically Morph A Mesh | Babylon.js Documentation, accessed June 29, 2025, [https://doc.babylonjs.com/features/featuresDeepDive/mesh/dynamicMeshMorph/](https://doc.babylonjs.com/features/featuresDeepDive/mesh/dynamicMeshMorph/)
+54. Monorepos vs. Polyrepos: Which one fits your use case? \- LogRocket Blog, accessed June 29, 2025, [https://blog.logrocket.com/monorepos-vs-polyrepos-which-one-fits-your-use-case/](https://blog.logrocket.com/monorepos-vs-polyrepos-which-one-fits-your-use-case/)
+55. Choose Monorepo or Polyrepo for Your Project: An In-Depth Analysis \- Medium, accessed June 29, 2025, [https://medium.com/tuanhdotnet/choose-monorepo-or-polyrepo-for-your-project-an-in-depth-analysis-1b61fdd93a09](https://medium.com/tuanhdotnet/choose-monorepo-or-polyrepo-for-your-project-an-in-depth-analysis-1b61fdd93a09)
+56. A Simple Monorepo Setup with Next.js and Express.js | by Serdar Ulutas \- Medium, accessed June 29, 2025, [https://medium.com/@serdar.ulutas/a-simple-monorepo-setup-with-next-js-and-express-js-4bbe0e99b259](https://medium.com/@serdar.ulutas/a-simple-monorepo-setup-with-next-js-and-express-js-4bbe0e99b259)
+57. Best Practices for Dependency Management \- tss-yonder.com, accessed June 29, 2025, [https://tss-yonder.com/insights/best-practices-for-dependency-management](https://tss-yonder.com/insights/best-practices-for-dependency-management)
+58. Fullstack applications \- Reference Architecture \- Cloudflare Docs, accessed June 29, 2025, [https://developers.cloudflare.com/reference-architecture/diagrams/serverless/fullstack-application/](https://developers.cloudflare.com/reference-architecture/diagrams/serverless/fullstack-application/)
 59. Orbital Mechanics near a Rotating Asteroid \- arXiv, accessed June 29, 2025, [https://arxiv.org/pdf/1403.0402](https://arxiv.org/pdf/1403.0402)
