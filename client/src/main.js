@@ -31,6 +31,13 @@ class App {
       // Connect UI events
       this.connectUIEvents()
 
+      // Load real asteroid data
+      this.uiManager.showLoading('Loading asteroid data...')
+      await this.simulator.loadRealAsteroidData()
+
+      // Connect to WebSocket for real-time updates
+      this.wsService.connect()
+
       // Hide loading screen
       this.uiManager.hideLoading()
       this.isInitialized = true
@@ -39,6 +46,9 @@ class App {
 
       // Start the render loop
       this.simulator.startRenderLoop()
+
+      // Start stats update loop
+      this.startStatsUpdate()
     } catch (error) {
       console.error('Failed to initialize application:', error)
       this.uiManager.showError(
@@ -48,31 +58,75 @@ class App {
   }
 
   connectUIEvents () {
-    // Play/Pause button
-    const playPauseBtn = document.getElementById('play-pause')
-    playPauseBtn.addEventListener('click', () => {
-      this.simulator.togglePause()
-      playPauseBtn.textContent = this.simulator.isPaused ? 'Play' : 'Pause'
-    })
+    // Time speed control
+    const timeSpeedSlider = document.getElementById('timeSpeed')
+    const speedValue = document.getElementById('speedValue')
 
-    // Reset view button
-    const resetViewBtn = document.getElementById('reset-view')
-    resetViewBtn.addEventListener('click', () => {
-      this.simulator.resetCamera()
-    })
+    if (timeSpeedSlider && speedValue) {
+      timeSpeedSlider.addEventListener('input', (e) => {
+        const speed = parseFloat(e.target.value)
+        this.simulator.setTimeSpeed(speed)
+        speedValue.textContent = speed + 'x'
+      })
+    }
 
-    // Time speed slider
-    const timeSpeedSlider = document.getElementById('time-speed')
-    const speedValue = document.getElementById('speed-value')
-    timeSpeedSlider.addEventListener('input', (e) => {
-      const speed = parseFloat(e.target.value)
-      this.simulator.setTimeSpeed(speed)
-      speedValue.textContent = speed + 'x'
-    })
+    // Pause/Resume button
+    const pauseBtn = document.getElementById('pauseBtn')
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', () => {
+        this.simulator.togglePause()
+        const isPaused = this.simulator.isPaused
+        this.uiManager.setPauseButtonState(isPaused)
+      })
+    }
 
-    // Update UI with simulator stats
+    // Reset camera button
+    const resetBtn = document.getElementById('resetBtn')
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this.simulator.resetCamera()
+      })
+    }
+
+    // Sync data button
+    const syncBtn = document.getElementById('syncBtn')
+    if (syncBtn) {
+      syncBtn.addEventListener('click', async () => {
+        try {
+          this.uiManager.setSyncButtonLoading(true)
+          this.uiManager.showLoading('Syncing asteroid data...')
+
+          const result = await this.wsService.syncAsteroidData()
+          console.log('Sync result:', result)
+
+          // Reload asteroid data after sync
+          await this.simulator.loadRealAsteroidData()
+
+          this.uiManager.showLoading('Data synced successfully!')
+          setTimeout(() => {
+            this.uiManager.hideLoading()
+          }, 2000)
+        } catch (error) {
+          console.error('Error syncing data:', error)
+          this.uiManager.showError('Failed to sync data: ' + error.message)
+        } finally {
+          this.uiManager.setSyncButtonLoading(false)
+        }
+      })
+    }
+
+    // WebSocket connection status
+    if (this.wsService) {
+      this.wsService.onConnectionChange = (isConnected) => {
+        this.uiManager.updateConnectionStatus(isConnected)
+      }
+    }
+  }
+
+  startStatsUpdate () {
+    // Update UI stats every second
     setInterval(() => {
-      if (this.simulator) {
+      if (this.isInitialized && this.simulator) {
         const stats = this.simulator.getStats()
         this.uiManager.updateStats(stats)
       }

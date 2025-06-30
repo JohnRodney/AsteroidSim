@@ -32,29 +32,29 @@ describe('UIManager', () => {
       expect(uiManager.formatDistance(0)).toBe('0 km')
     })
 
-    test('should format small distances in km', () => {
-      expect(uiManager.formatDistance(500)).toBe('500.00 km')
+    test('should format small distances in meters', () => {
+      expect(uiManager.formatDistance(500)).toBe('500.00 m')
     })
 
     test('should format large distances with appropriate units', () => {
-      expect(uiManager.formatDistance(1e6)).toBe('1.00 million km')
-      expect(uiManager.formatDistance(1e9)).toBe('1.00 billion km')
+      expect(uiManager.formatDistance(1e6)).toBe('1.00 Mm')
+      expect(uiManager.formatDistance(1e9)).toBe('1.00 Gm')
     })
   })
 
   describe('formatTime', () => {
     test('should format zero time correctly', () => {
-      expect(uiManager.formatTime(0)).toBe('0 days')
+      expect(uiManager.formatTime(0)).toBe('0 s')
     })
 
     test('should format time in days', () => {
       const secondsInDay = 24 * 60 * 60
-      expect(uiManager.formatTime(secondsInDay * 30)).toBe('30.0 days')
+      expect(uiManager.formatTime(secondsInDay * 30)).toBe('30d 0h 0m')
     })
 
     test('should format time in years', () => {
       const secondsInYear = 365.25 * 24 * 60 * 60
-      expect(uiManager.formatTime(secondsInYear * 2)).toBe('2.00 years')
+      expect(uiManager.formatTime(secondsInYear * 2)).toBe('730d 12h 0m')
     })
   })
 

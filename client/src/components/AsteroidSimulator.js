@@ -72,6 +72,172 @@ export class AsteroidSimulator {
     console.log('3D scene initialized successfully')
   }
 
+  async loadRealAsteroidData () {
+    try {
+      console.log('🔄 Loading real asteroid data from backend...')
+
+      // Fetch asteroid data from backend
+      const response = await fetch(
+        'http://localhost:3001/api/asteroids?limit=100'
+      )
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.data.length > 0) {
+        console.log(`📊 Loaded ${data.data.length} real asteroids`)
+        this.createRealAsteroids(data.data)
+      } else {
+        console.log('No real asteroid data available, using placeholders')
+        this.createPlaceholderAsteroids()
+      }
+    } catch (error) {
+      console.error('Error loading real asteroid data:', error)
+      console.log('Falling back to placeholder asteroids')
+      this.createPlaceholderAsteroids()
+    }
+  }
+
+  createRealAsteroids (asteroidData) {
+    // Clear existing placeholder asteroids
+    this.clearAsteroids()
+
+    // Create base geometries for different asteroid types
+    const asteroidTypes = {
+      'C-type': { color: new Color3(0.3, 0.2, 0.1), density: 1.38 },
+      'S-type': { color: new Color3(0.7, 0.6, 0.5), density: 2.71 },
+      'M-type': { color: new Color3(0.8, 0.7, 0.6), density: 5.32 }
+    }
+
+    // Create base meshes for each type
+    Object.keys(asteroidTypes).forEach((type) => {
+      const baseMesh = MeshBuilder.CreateSphere(
+        `asteroid_${type}`,
+        { diameter: 1 },
+        this.scene
+      )
+
+      const material = new StandardMaterial(`material_${type}`, this.scene)
+      material.diffuseColor = asteroidTypes[type].color
+      material.specularColor = new Color3(0.1, 0.1, 0.1)
+
+      baseMesh.material = material
+      baseMesh.setEnabled(false) // Hide the base mesh
+
+      this.asteroidInstances.set(type, {
+        baseMesh,
+        instances: [],
+        count: 0
+      })
+    })
+
+    // Create instances for each real asteroid
+    asteroidData.forEach((asteroid) => {
+      this.createRealAsteroidInstance(asteroid)
+    })
+
+    console.log(
+      `✅ Created ${this.stats.asteroidCount} real asteroid instances`
+    )
+  }
+
+  createRealAsteroidInstance (asteroid) {
+    const physical = asteroid.physical_properties || {}
+    const orbital = asteroid.orbital_elements || {}
+
+    // Determine asteroid type based on composition
+    let type = 'C-type' // Default
+    if (physical.composition_type) {
+      type = physical.composition_type
+    } else if (physical.albedo) {
+      // Estimate type based on albedo
+      const albedo = parseFloat(physical.albedo)
+      if (albedo > 0.2) type = 'S-type'
+      else if (albedo > 0.1) type = 'M-type'
+      else type = 'C-type'
+    }
+
+    const asteroidData = this.asteroidInstances.get(type)
+    if (!asteroidData) return
+
+    // Calculate position from orbital elements
+    const position = this.calculateAsteroidPosition(orbital)
+
+    // Calculate size based on diameter or default
+    let scale = 0.5
+    if (physical.diameter) {
+      scale = Math.max(0.1, Math.min(2.0, parseFloat(physical.diameter) / 100))
+    }
+
+    const instance = asteroidData.baseMesh.createInstance(
+      `asteroid_${asteroid.designation || asteroid.id}`
+    )
+
+    instance.position = position
+    instance.scaling = new Vector3(scale, scale, scale)
+
+    // Add some random rotation
+    instance.rotation = new Vector3(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    )
+
+    // Store asteroid data with the instance
+    instance.asteroidData = asteroid
+
+    asteroidData.instances.push(instance)
+    asteroidData.count++
+
+    this.stats.asteroidCount++
+
+    // Update total mass if available
+    if (physical.mass) {
+      this.stats.totalMass += parseFloat(physical.mass)
+    }
+  }
+
+  calculateAsteroidPosition (orbital) {
+    // Simplified position calculation based on orbital elements
+    // In a real implementation, this would use proper orbital mechanics
+
+    const a = parseFloat(orbital.a) || 2.5 // Semi-major axis in AU
+    const e = parseFloat(orbital.e) || 0.1 // Eccentricity
+    const i = parseFloat(orbital.i) || 0 // Inclination
+    const omega = parseFloat(orbital.om) || 0 // Longitude of ascending node
+    const w = parseFloat(orbital.w) || 0 // Argument of pericenter
+    const M = parseFloat(orbital.ma) || 0 // Mean anomaly
+
+    // Convert AU to scene units (1 AU = 50 scene units)
+    const sceneScale = 50
+
+    // Simplified position calculation
+    const radius = a * sceneScale * (1 - e * Math.cos(M))
+    const angle = M + w + omega
+
+    const x = radius * Math.cos(angle) * Math.cos(i)
+    const z = radius * Math.sin(angle) * Math.cos(i)
+    const y = radius * Math.sin(i)
+
+    return new Vector3(x, y, z)
+  }
+
+  clearAsteroids () {
+    // Remove all existing asteroid instances
+    this.asteroidInstances.forEach((asteroidData) => {
+      asteroidData.instances.forEach((instance) => {
+        instance.dispose()
+      })
+      asteroidData.instances = []
+      asteroidData.count = 0
+    })
+
+    this.stats.asteroidCount = 0
+    this.stats.totalMass = 0
+  }
+
   setupCamera () {
     // Create an arc rotate camera for orbital viewing
     this.camera = new ArcRotateCamera(

@@ -1,52 +1,51 @@
 export class UIManager {
   constructor () {
     this.loadingScreen = document.getElementById('loading-screen')
+    this.loadingText = document.getElementById('loading-text')
+    this.errorMessage = document.getElementById('error-message')
     this.asteroidCountElement = document.getElementById('asteroid-count')
     this.totalMassElement = document.getElementById('total-mass')
     this.fpsElement = document.getElementById('fps')
+    this.connectionStatus = document.getElementById('connectionStatus')
+    this.connectionText = document.getElementById('connectionText')
+    this.syncBtn = document.getElementById('syncBtn')
+    this.pauseBtn = document.getElementById('pauseBtn')
+    this.resetBtn = document.getElementById('resetBtn')
+    this.timeSpeedSlider = document.getElementById('timeSpeed')
+    this.speedValue = document.getElementById('speedValue')
   }
 
   showLoading (message = 'Loading...') {
     if (this.loadingScreen) {
-      const messageElement = this.loadingScreen.querySelector('p')
-      if (messageElement) {
-        messageElement.textContent = message
+      this.loadingScreen.style.display = 'flex'
+      if (this.loadingText) {
+        this.loadingText.textContent = message
       }
-      this.loadingScreen.classList.remove('hidden')
     }
   }
 
   hideLoading () {
     if (this.loadingScreen) {
-      this.loadingScreen.classList.add('hidden')
+      this.loadingScreen.style.display = 'none'
     }
   }
 
   showError (message) {
-    // Create error notification
-    const errorDiv = document.createElement('div')
-    errorDiv.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 0, 0, 0.9);
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      z-index: 1000;
-      max-width: 300px;
-      word-wrap: break-word;
-    `
-    errorDiv.textContent = message
+    if (this.errorMessage) {
+      this.errorMessage.textContent = message
+      this.errorMessage.style.display = 'block'
 
-    document.body.appendChild(errorDiv)
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        this.hideError()
+      }, 5000)
+    }
+  }
 
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (errorDiv.parentNode) {
-        errorDiv.parentNode.removeChild(errorDiv)
-      }
-    }, 5000)
+  hideError () {
+    if (this.errorMessage) {
+      this.errorMessage.style.display = 'none'
+    }
   }
 
   showNotification (message, type = 'info') {
@@ -83,6 +82,22 @@ export class UIManager {
     }, 3000)
   }
 
+  updateConnectionStatus (isConnected, isConnecting = false) {
+    if (this.connectionStatus && this.connectionText) {
+      if (isConnecting) {
+        this.connectionStatus.className = 'status-indicator status-connecting'
+        this.connectionText.textContent = 'Connecting...'
+      } else if (isConnected) {
+        this.connectionStatus.className = 'status-indicator status-connected'
+        this.connectionText.textContent = 'Connected'
+      } else {
+        this.connectionStatus.className =
+          'status-indicator status-disconnected'
+        this.connectionText.textContent = 'Disconnected'
+      }
+    }
+  }
+
   updateStats (stats) {
     if (this.asteroidCountElement) {
       this.asteroidCountElement.textContent =
@@ -101,25 +116,79 @@ export class UIManager {
   formatMass (mass) {
     if (mass === 0) return '0 kg'
 
-    const units = [
-      { value: 1e24, symbol: 'Yg' },
-      { value: 1e21, symbol: 'Zg' },
-      { value: 1e18, symbol: 'Eg' },
-      { value: 1e15, symbol: 'Pg' },
-      { value: 1e12, symbol: 'Tg' },
-      { value: 1e9, symbol: 'Gg' },
-      { value: 1e6, symbol: 'Mg' },
-      { value: 1e3, symbol: 'kg' },
-      { value: 1, symbol: 'g' }
-    ]
+    if (mass >= 1e24) {
+      return (mass / 1e24).toFixed(2) + ' Yg'
+    } else if (mass >= 1e21) {
+      return (mass / 1e21).toFixed(2) + ' Zg'
+    } else if (mass >= 1e18) {
+      return (mass / 1e18).toFixed(2) + ' Eg'
+    } else if (mass >= 1e15) {
+      return (mass / 1e15).toFixed(2) + ' Pg'
+    } else if (mass >= 1e12) {
+      return (mass / 1e12).toFixed(2) + ' Tg'
+    } else if (mass >= 1e9) {
+      return (mass / 1e9).toFixed(2) + ' Gg'
+    } else if (mass >= 1e6) {
+      return (mass / 1e6).toFixed(2) + ' Mg'
+    } else if (mass >= 1e3) {
+      return (mass / 1e3).toFixed(2) + ' kg'
+    } else {
+      return mass.toFixed(2) + ' g'
+    }
+  }
 
-    for (const unit of units) {
-      if (mass >= unit.value) {
-        return (mass / unit.value).toFixed(2) + ' ' + unit.symbol
+  formatDistance (distance) {
+    if (distance === 0) return '0 km'
+
+    if (distance >= 1e9) {
+      return (distance / 1e9).toFixed(2) + ' Gm'
+    } else if (distance >= 1e6) {
+      return (distance / 1e6).toFixed(2) + ' Mm'
+    } else if (distance >= 1e3) {
+      return (distance / 1e3).toFixed(2) + ' km'
+    } else {
+      return distance.toFixed(2) + ' m'
+    }
+  }
+
+  formatTime (seconds) {
+    if (seconds === 0) return '0 s'
+
+    const days = Math.floor(seconds / 86400)
+    const hours = Math.floor((seconds % 86400) / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    } else {
+      return `${minutes}m`
+    }
+  }
+
+  setSyncButtonLoading (isLoading) {
+    if (this.syncBtn) {
+      if (isLoading) {
+        this.syncBtn.textContent = 'Syncing...'
+        this.syncBtn.disabled = true
+      } else {
+        this.syncBtn.textContent = 'Sync Data'
+        this.syncBtn.disabled = false
       }
     }
+  }
 
-    return mass.toFixed(2) + ' g'
+  setPauseButtonState (isPaused) {
+    if (this.pauseBtn) {
+      this.pauseBtn.textContent = isPaused ? 'Resume' : 'Pause'
+    }
+  }
+
+  updateSpeedValue (speed) {
+    if (this.speedValue) {
+      this.speedValue.textContent = speed + 'x'
+    }
   }
 
   createInfoPanel (asteroidData) {
@@ -173,33 +242,6 @@ export class UIManager {
         panel.parentNode.removeChild(panel)
       }
     }, 10000)
-  }
-
-  formatDistance (distance) {
-    if (distance === 0) return '0 km'
-
-    if (distance >= 1e9) {
-      return (distance / 1e9).toFixed(2) + ' billion km'
-    } else if (distance >= 1e6) {
-      return (distance / 1e6).toFixed(2) + ' million km'
-    } else if (distance >= 1e3) {
-      return (distance / 1e3).toFixed(2) + ' thousand km'
-    }
-
-    return distance.toFixed(2) + ' km'
-  }
-
-  formatTime (seconds) {
-    if (seconds === 0) return '0 days'
-
-    const days = seconds / (24 * 60 * 60)
-    const years = days / 365.25
-
-    if (years >= 1) {
-      return years.toFixed(2) + ' years'
-    }
-
-    return days.toFixed(1) + ' days'
   }
 
   showLoadingProgress (progress, message) {
