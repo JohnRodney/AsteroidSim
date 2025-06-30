@@ -62,18 +62,21 @@ describe('UIManager', () => {
     test('should update stats correctly', () => {
       const stats = {
         asteroidCount: 1000,
+        planetCount: 8,
         totalMass: 1e12,
         fps: 60
       }
 
       // Mock DOM elements
       uiManager.asteroidCountElement = { textContent: '' }
+      uiManager.planetCountElement = { textContent: '' }
       uiManager.totalMassElement = { textContent: '' }
       uiManager.fpsElement = { textContent: '' }
 
       uiManager.updateStats(stats)
 
       expect(uiManager.asteroidCountElement.textContent).toBe('1,000')
+      expect(uiManager.planetCountElement.textContent).toBe('8')
       expect(uiManager.totalMassElement.textContent).toBe('1.00 Tg')
       expect(uiManager.fpsElement.textContent).toBe(60)
     })

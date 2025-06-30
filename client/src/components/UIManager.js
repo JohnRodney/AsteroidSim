@@ -4,8 +4,10 @@ export class UIManager {
     this.loadingText = document.getElementById('loading-text')
     this.errorMessage = document.getElementById('error-message')
     this.asteroidCountElement = document.getElementById('asteroid-count')
+    this.planetCountElement = document.getElementById('planet-count')
     this.totalMassElement = document.getElementById('total-mass')
     this.fpsElement = document.getElementById('fps')
+    this.simulationDateElement = document.getElementById('simulation-date')
     this.connectionStatus = document.getElementById('connectionStatus')
     this.connectionText = document.getElementById('connectionText')
     this.syncBtn = document.getElementById('syncBtn')
@@ -13,6 +15,10 @@ export class UIManager {
     this.resetBtn = document.getElementById('resetBtn')
     this.timeSpeedSlider = document.getElementById('timeSpeed')
     this.speedValue = document.getElementById('speedValue')
+
+    // Navigation panel
+    this.navigationPanel = null
+    this.simulator = null // Reference to the simulator for zooming
   }
 
   showLoading (message = 'Loading...') {
@@ -104,6 +110,10 @@ export class UIManager {
         stats.asteroidCount.toLocaleString()
     }
 
+    if (this.planetCountElement) {
+      this.planetCountElement.textContent = stats.planetCount.toLocaleString()
+    }
+
     if (this.totalMassElement) {
       this.totalMassElement.textContent = this.formatMass(stats.totalMass)
     }
@@ -191,6 +201,31 @@ export class UIManager {
     }
   }
 
+  updateSimulationDate (date) {
+    if (this.simulationDateElement) {
+      this.simulationDateElement.textContent = date.toLocaleDateString()
+    }
+  }
+
+  showPlanetInfo (planetKey, planet) {
+    // Create a simple planet info display
+    const planetData = planet.planetData
+    const orbital = planetData.orbital
+
+    // Calculate orbital period in days
+    const orbitalPeriod = orbital.n ? 365.25 / orbital.n : 0
+
+    const message = `${planetData.name}
+Diameter: ${this.formatDistance(planetData.diameter)} km
+Mass: ${this.formatMass(planetData.mass)}
+Distance from Sun: ${(orbital.a * 149.6).toFixed(1)} million km
+Orbital Period: ${orbitalPeriod.toFixed(1)} days
+Eccentricity: ${orbital.e.toFixed(4)}
+Inclination: ${orbital.i.toFixed(2)}°`
+
+    this.showNotification(message, 'info')
+  }
+
   createInfoPanel (asteroidData) {
     // Create detailed info panel for asteroid selection
     const panel = document.createElement('div')
@@ -250,6 +285,174 @@ export class UIManager {
       if (messageElement) {
         messageElement.textContent = `${message} (${Math.round(progress)}%)`
       }
+    }
+  }
+
+  // Create navigation panel with planet and asteroid buttons
+  createNavigationPanel (simulator) {
+    this.simulator = simulator
+
+    // Remove existing panel if it exists
+    if (this.navigationPanel) {
+      this.navigationPanel.remove()
+    }
+
+    // Create navigation panel container
+    this.navigationPanel = document.createElement('div')
+    this.navigationPanel.id = 'navigation-panel'
+    this.navigationPanel.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 250px;
+      max-height: 80vh;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px;
+      color: white;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    `
+
+    // Create header
+    const header = document.createElement('h3')
+    header.textContent = 'Navigation'
+    header.style.cssText = `
+      margin: 0 0 15px 0;
+      color: #fff;
+      font-size: 16px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    `
+    this.navigationPanel.appendChild(header)
+
+    // Create planets section
+    const planetsSection = this.createSection('Planets', simulator.planetData)
+    this.navigationPanel.appendChild(planetsSection)
+
+    // Create asteroids section (if there are asteroids)
+    if (simulator.asteroids && simulator.asteroids.size > 0) {
+      const asteroidsSection = this.createSection(
+        'Asteroids',
+        simulator.asteroids
+      )
+      this.navigationPanel.appendChild(asteroidsSection)
+    }
+
+    // Add reset camera button
+    const resetButton = document.createElement('button')
+    resetButton.textContent = 'Reset Camera'
+    resetButton.style.cssText = `
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    `
+    resetButton.onclick = () => simulator.resetCamera()
+    this.navigationPanel.appendChild(resetButton)
+
+    // Add to page
+    document.body.appendChild(this.navigationPanel)
+  }
+
+  createSection (title, items) {
+    const section = document.createElement('div')
+    section.style.cssText = `
+      margin-bottom: 20px;
+    `
+
+    const sectionTitle = document.createElement('h4')
+    sectionTitle.textContent = title
+    sectionTitle.style.cssText = `
+      margin: 0 0 10px 0;
+      color: #ccc;
+      font-size: 14px;
+      font-weight: bold;
+    `
+    section.appendChild(sectionTitle)
+
+    // Create scrollable container for items
+    const itemsContainer = document.createElement('div')
+    itemsContainer.style.cssText = `
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+    `
+
+    // Add items
+    if (title === 'Planets') {
+      Object.keys(items).forEach((planetKey) => {
+        const planet = items[planetKey]
+        const button = this.createItemButton(planet.name, planetKey, 'planet')
+        itemsContainer.appendChild(button)
+      })
+    } else if (title === 'Asteroids') {
+      items.forEach((asteroid, asteroidId) => {
+        const button = this.createItemButton(
+          asteroid.name || `Asteroid ${asteroidId}`,
+          asteroidId,
+          'asteroid'
+        )
+        itemsContainer.appendChild(button)
+      })
+    }
+
+    section.appendChild(itemsContainer)
+    return section
+  }
+
+  createItemButton (name, id, type) {
+    const button = document.createElement('button')
+    button.textContent = name
+    button.style.cssText = `
+      width: 100%;
+      padding: 8px 12px;
+      margin: 2px 0;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: left;
+      transition: background 0.2s;
+    `
+
+    button.onmouseover = () => {
+      button.style.background = '#555'
+    }
+
+    button.onmouseout = () => {
+      button.style.background = '#333'
+    }
+
+    button.onclick = () => {
+      if (type === 'planet') {
+        this.simulator.focusCameraOnPlanet(id)
+      } else if (type === 'asteroid') {
+        this.simulator.focusCameraOnAsteroid(
+          this.simulator.asteroids.get(id).mesh
+        )
+      }
+    }
+
+    return button
+  }
+
+  // Update navigation panel with new data
+  updateNavigationPanel () {
+    if (this.navigationPanel && this.simulator) {
+      this.createNavigationPanel(this.simulator)
     }
   }
 }

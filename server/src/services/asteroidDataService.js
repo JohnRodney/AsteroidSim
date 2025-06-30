@@ -1,20 +1,20 @@
-const axios = require('axios');
-const { query } = require('../database/connection');
+const axios = require("axios");
+const { query } = require("../database/connection");
 
 // JPL SBDB API configuration
-const JPL_SBDB_BASE_URL = 'https://ssd-api.jpl.nasa.gov/sbdb.api';
-const ASTERANK_BASE_URL = 'https://asterank.com/api';
+const JPL_SBDB_BASE_URL = "https://ssd-api.jpl.nasa.gov/sbdb.api";
+const ASTERANK_BASE_URL = "https://asterank.com/api";
 
 // Asteroid composition densities from the devguide
 const COMPOSITION_DENSITIES = {
-  'C-type': 1.38, // g/cm³
-  'S-type': 2.71, // g/cm³
-  'M-type': 5.32, // g/cm³
+  "C-type": 1.38, // g/cm³
+  "S-type": 2.71, // g/cm³
+  "M-type": 5.32, // g/cm³
 };
 
 const fetchAsteroidData = async () => {
   try {
-    console.log('🔄 Starting asteroid data fetch from external APIs...');
+    console.log("🔄 Starting asteroid data fetch from external APIs...");
 
     // Fetch data from JPL SBDB API
     const jplData = await fetchJPLData();
@@ -39,58 +39,135 @@ const fetchAsteroidData = async () => {
       stored_count: storedCount,
     };
   } catch (error) {
-    console.error('❌ Error fetching asteroid data:', error);
+    console.error("❌ Error fetching asteroid data:", error);
     throw error;
   }
 };
 
 const fetchJPLData = async () => {
   try {
-    // Fetch main belt asteroids from JPL SBDB
-    const response = await axios.get(JPL_SBDB_BASE_URL, {
-      params: {
-        class: 'MBA', // Main Belt Asteroids
-        limit: 100, // Start with a reasonable limit
-        full_precision: true,
-        phys_par: true,
-        orbit: true,
-      },
-      timeout: 30000,
-    });
+    console.log("🔄 Fetching data for well-known asteroids from JPL SBDB...");
 
-    if (response.data && response.data.result) {
-      return response.data.result.map((asteroid) => ({
-        id: asteroid.spkid,
-        designation: asteroid.designation,
-        name: asteroid.name || null,
-        orbit_class: asteroid.orbit_class || 'Main-belt Asteroid',
-        orbital_elements: {
-          e: asteroid.orbit?.e,
-          q: asteroid.orbit?.q,
-          tp: asteroid.orbit?.tp,
-          om: asteroid.orbit?.om,
-          w: asteroid.orbit?.w,
-          i: asteroid.orbit?.i,
-          a: asteroid.orbit?.a,
-          ma: asteroid.orbit?.ma,
-          per: asteroid.orbit?.per,
-          n: asteroid.orbit?.n,
-          ad: asteroid.orbit?.ad,
-          epoch: asteroid.orbit?.epoch,
-        },
-        physical_properties: {
-          h: asteroid.phys_par?.h, // Absolute magnitude
-          diameter: asteroid.phys_par?.diameter,
-          albedo: asteroid.phys_par?.albedo,
-          rot_per: asteroid.phys_par?.rot_per,
-        },
-      }));
+    // List of well-known main belt asteroids to query
+    const asteroidDesignations = [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "15",
+      "16",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+    ];
+
+    const results = [];
+
+    for (const des of asteroidDesignations) {
+      try {
+        const response = await axios.get(JPL_SBDB_BASE_URL, {
+          params: {
+            des: des,
+            "phys-par": 1,
+          },
+          timeout: 10000,
+          httpsAgent: new (require("https").Agent)({
+            rejectUnauthorized: false,
+          }),
+        });
+
+        if (
+          response.data &&
+          response.data.object &&
+          response.data.orbit &&
+          response.data.phys_par
+        ) {
+          const asteroid = {
+            id: response.data.object.spkid,
+            designation: response.data.object.des,
+            name: response.data.object.shortname || null,
+            orbit_class:
+              response.data.object.orbit_class?.name || "Main-belt Asteroid",
+            orbital_elements: {
+              e: response.data.orbit.elements?.find((e) => e.name === "e")
+                ?.value,
+              q: response.data.orbit.elements?.find((e) => e.name === "q")
+                ?.value,
+              tp: response.data.orbit.elements?.find((e) => e.name === "tp")
+                ?.value,
+              om: response.data.orbit.elements?.find((e) => e.name === "om")
+                ?.value,
+              w: response.data.orbit.elements?.find((e) => e.name === "w")
+                ?.value,
+              i: response.data.orbit.elements?.find((e) => e.name === "i")
+                ?.value,
+              a: response.data.orbit.elements?.find((e) => e.name === "a")
+                ?.value,
+              ma: response.data.orbit.elements?.find((e) => e.name === "ma")
+                ?.value,
+              per: response.data.orbit.elements?.find((e) => e.name === "per")
+                ?.value,
+              n: response.data.orbit.elements?.find((e) => e.name === "n")
+                ?.value,
+              ad: response.data.orbit.elements?.find((e) => e.name === "ad")
+                ?.value,
+              epoch: response.data.orbit.epoch,
+            },
+            physical_properties: {
+              h: response.data.phys_par?.find((p) => p.name === "H")?.value,
+              diameter: response.data.phys_par?.find(
+                (p) => p.name === "diameter"
+              )?.value,
+              albedo: response.data.phys_par?.find((p) => p.name === "albedo")
+                ?.value,
+              rot_per: response.data.phys_par?.find((p) => p.name === "rot_per")
+                ?.value,
+              density: response.data.phys_par?.find((p) => p.name === "density")
+                ?.value,
+            },
+          };
+
+          results.push(asteroid);
+          console.log(
+            `✅ Fetched data for ${asteroid.name || asteroid.designation}`
+          );
+        }
+
+        // Small delay to be respectful to the API
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`Error fetching asteroid ${des}:`, error.message);
+        // Continue with next asteroid
+      }
     }
 
-    return [];
+    console.log(
+      `📊 Successfully fetched ${results.length} asteroids from JPL SBDB`
+    );
+    return results;
   } catch (error) {
-    console.error('Error fetching JPL data:', error.message);
-    // Return empty array to continue with other data sources
+    console.error("Error in JPL data fetch:", error.message);
     return [];
   }
 };
@@ -110,7 +187,7 @@ const fetchAsterankData = async () => {
         id: asteroid.id?.toString(),
         designation: asteroid.full_name,
         name: asteroid.proper_name || null,
-        orbit_class: 'Main-belt Asteroid',
+        orbit_class: "Main-belt Asteroid",
         orbital_elements: {
           e: asteroid.e,
           q: asteroid.q,
@@ -137,7 +214,7 @@ const fetchAsterankData = async () => {
 
     return [];
   } catch (error) {
-    console.error('Error fetching Asterank data:', error.message);
+    console.error("Error fetching Asterank data:", error.message);
     // Return empty array to continue with other data sources
     return [];
   }
@@ -151,7 +228,7 @@ const mergeAsteroidData = (jplData, asterankData) => {
     if (asteroid.id) {
       merged.set(asteroid.id, {
         ...asteroid,
-        source: 'jpl',
+        source: "jpl",
       });
     }
   });
@@ -168,12 +245,12 @@ const mergeAsteroidData = (jplData, asterankData) => {
             ...existing.physical_properties,
             ...asteroid.physical_properties,
           },
-          source: 'merged',
+          source: "merged",
         });
       } else {
         merged.set(asteroid.id, {
           ...asteroid,
-          source: 'asterank',
+          source: "asterank",
         });
       }
     }
@@ -245,7 +322,7 @@ const storeAsteroidData = async (asteroids) => {
 
     return storedCount;
   } catch (error) {
-    console.error('Error storing asteroid data:', error);
+    console.error("Error storing asteroid data:", error);
     throw error;
   }
 };
@@ -261,7 +338,7 @@ const getAsteroidById = async (id) => {
     const result = await query(sql, [id]);
     return result.rows[0] || null;
   } catch (error) {
-    console.error('Error fetching asteroid by ID:', error);
+    console.error("Error fetching asteroid by ID:", error);
     throw error;
   }
 };
@@ -283,7 +360,7 @@ const getAsteroidStats = async () => {
     const result = await query(sql);
     return result.rows[0];
   } catch (error) {
-    console.error('Error fetching asteroid stats:', error);
+    console.error("Error fetching asteroid stats:", error);
     throw error;
   }
 };

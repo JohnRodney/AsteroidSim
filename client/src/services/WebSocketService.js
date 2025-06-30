@@ -8,8 +8,8 @@ export class WebSocketService {
     this.onAsteroidData = null
     this.onConnectionChange = null
     this.onError = null
-    this.backendUrl = 'http://localhost:3001'
-    this.wsUrl = 'ws://localhost:3001'
+    this.backendUrl = 'http://localhost:3002'
+    this.wsUrl = 'ws://localhost:3002'
   }
 
   connect () {

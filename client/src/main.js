@@ -1,12 +1,14 @@
 import { AsteroidSimulator } from './components/AsteroidSimulator.js'
 import { UIManager } from './components/UIManager.js'
 import { WebSocketService } from './services/WebSocketService.js'
+import { AsteroidInfoModal } from './components/AsteroidInfoModal.js'
 
 class App {
   constructor () {
     this.simulator = null
     this.uiManager = null
     this.wsService = null
+    this.asteroidModal = null
     this.isInitialized = false
   }
 
@@ -20,7 +22,16 @@ class App {
 
       // Initialize the 3D simulator
       this.simulator = new AsteroidSimulator()
+      this.simulator.uiManager = this.uiManager
       await this.simulator.init()
+
+      // Initialize asteroid info modal
+      this.asteroidModal = new AsteroidInfoModal()
+
+      // Setup asteroid click handler
+      this.simulator.onAsteroidClick = (asteroidData) => {
+        this.asteroidModal.show(asteroidData)
+      }
 
       // Initialize WebSocket service for real-time data
       this.wsService = new WebSocketService()
@@ -66,7 +77,19 @@ class App {
       timeSpeedSlider.addEventListener('input', (e) => {
         const speed = parseFloat(e.target.value)
         this.simulator.setTimeSpeed(speed)
-        speedValue.textContent = speed + 'x'
+
+        // Display time speed in a more meaningful way
+        let displayText
+        if (speed === 0) {
+          displayText = 'Paused'
+        } else if (speed <= 1) {
+          displayText = `${speed.toFixed(1)}x`
+        } else if (speed <= 10) {
+          displayText = `${speed.toFixed(1)}x`
+        } else {
+          displayText = `${speed.toFixed(0)}x`
+        }
+        speedValue.textContent = displayText
       })
     }
 
@@ -129,6 +152,10 @@ class App {
       if (this.isInitialized && this.simulator) {
         const stats = this.simulator.getStats()
         this.uiManager.updateStats(stats)
+
+        // Update simulation date
+        const simulationDate = this.simulator.getSimulationDate()
+        this.uiManager.updateSimulationDate(simulationDate)
       }
     }, 1000)
   }

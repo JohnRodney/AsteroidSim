@@ -26,7 +26,7 @@ describe('WebSocketService', () => {
     test('should create WebSocket connection', () => {
       wsService.connect()
       expect(wsService.ws).toBeDefined()
-      expect(wsService.ws.url).toBe('ws://localhost:3001')
+      expect(wsService.ws.url).toBe('ws://localhost:3002')
     })
 
     test('should handle connection open', (done) => {

@@ -1,5 +1,5 @@
-const WebSocket = require('ws');
-const { query } = require('../database/connection');
+const WebSocket = require("ws");
+const { query } = require("../database/connection");
 
 let wss = null;
 let simulationInterval = null;
@@ -7,31 +7,31 @@ let simulationInterval = null;
 const setupWebSocketServer = (server) => {
   wss = new WebSocket.Server({ server });
 
-  console.log('🔌 WebSocket server initialized');
+  console.log("🔌 WebSocket server initialized");
 
-  wss.on('connection', (ws, req) => {
+  wss.on("connection", (ws, req) => {
     console.log(`🔗 New WebSocket connection from ${req.socket.remoteAddress}`);
 
     // Send initial connection confirmation
     ws.send(
       JSON.stringify({
-        type: 'connection',
-        message: 'Connected to Asteroid Simulator WebSocket',
+        type: "connection",
+        message: "Connected to Asteroid Simulator WebSocket",
         timestamp: new Date().toISOString(),
       })
     );
 
     // Handle incoming messages
-    ws.on('message', (message) => {
+    ws.on("message", (message) => {
       try {
         const data = JSON.parse(message);
         handleWebSocketMessage(ws, data);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error("Error parsing WebSocket message:", error);
         ws.send(
           JSON.stringify({
-            type: 'error',
-            message: 'Invalid message format',
+            type: "error",
+            message: "Invalid message format",
             timestamp: new Date().toISOString(),
           })
         );
@@ -39,13 +39,13 @@ const setupWebSocketServer = (server) => {
     });
 
     // Handle client disconnect
-    ws.on('close', () => {
-      console.log('🔌 WebSocket connection closed');
+    ws.on("close", () => {
+      console.log("🔌 WebSocket connection closed");
     });
 
     // Handle errors
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+    ws.on("error", (error) => {
+      console.error("WebSocket error:", error);
     });
   });
 
@@ -55,23 +55,23 @@ const setupWebSocketServer = (server) => {
 
 const handleWebSocketMessage = (ws, data) => {
   switch (data.type) {
-  case 'subscribe_asteroids':
-    handleAsteroidSubscription(ws, data);
-    break;
-  case 'request_asteroid_positions':
-    handlePositionRequest(ws, data);
-    break;
-  case 'simulation_control':
-    handleSimulationControl(ws, data);
-    break;
-  default:
-    ws.send(
-      JSON.stringify({
-        type: 'error',
-        message: 'Unknown message type',
-        timestamp: new Date().toISOString(),
-      })
-    );
+    case "subscribe_asteroids":
+      handleAsteroidSubscription(ws, data);
+      break;
+    case "request_asteroid_positions":
+      handlePositionRequest(ws, data);
+      break;
+    case "simulation_control":
+      handleSimulationControl(ws, data);
+      break;
+    default:
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Unknown message type",
+          timestamp: new Date().toISOString(),
+        })
+      );
   }
 };
 
@@ -88,7 +88,7 @@ const handleAsteroidSubscription = async (ws, data) => {
 
     ws.send(
       JSON.stringify({
-        type: 'subscription_confirmed',
+        type: "subscription_confirmed",
         asteroid_ids,
         update_frequency,
         timestamp: new Date().toISOString(),
@@ -96,14 +96,14 @@ const handleAsteroidSubscription = async (ws, data) => {
     );
 
     console.log(
-      `📡 Client subscribed to ${asteroid_ids?.length || 'all'} asteroids`
+      `📡 Client subscribed to ${asteroid_ids?.length || "all"} asteroids`
     );
   } catch (error) {
-    console.error('Error handling asteroid subscription:', error);
+    console.error("Error handling asteroid subscription:", error);
     ws.send(
       JSON.stringify({
-        type: 'error',
-        message: 'Failed to process subscription',
+        type: "error",
+        message: "Failed to process subscription",
         timestamp: new Date().toISOString(),
       })
     );
@@ -122,17 +122,17 @@ const handlePositionRequest = async (ws, data) => {
 
     ws.send(
       JSON.stringify({
-        type: 'asteroid_positions',
+        type: "asteroid_positions",
         data: positions,
         timestamp: new Date().toISOString(),
       })
     );
   } catch (error) {
-    console.error('Error handling position request:', error);
+    console.error("Error handling position request:", error);
     ws.send(
       JSON.stringify({
-        type: 'error',
-        message: 'Failed to calculate positions',
+        type: "error",
+        message: "Failed to calculate positions",
         timestamp: new Date().toISOString(),
       })
     );
@@ -143,30 +143,30 @@ const handleSimulationControl = (ws, data) => {
   const { action, parameters } = data;
 
   switch (action) {
-  case 'start':
-    startSimulationUpdates();
-    break;
-  case 'stop':
-    stopSimulationUpdates();
-    break;
-  case 'set_update_frequency':
-    if (ws.asteroidSubscription) {
-      ws.asteroidSubscription.updateFrequency = parameters.frequency;
-    }
-    break;
-  default:
-    ws.send(
-      JSON.stringify({
-        type: 'error',
-        message: 'Unknown simulation control action',
-        timestamp: new Date().toISOString(),
-      })
-    );
+    case "start":
+      startSimulationUpdates();
+      break;
+    case "stop":
+      stopSimulationUpdates();
+      break;
+    case "set_update_frequency":
+      if (ws.asteroidSubscription) {
+        ws.asteroidSubscription.updateFrequency = parameters.frequency;
+      }
+      break;
+    default:
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Unknown simulation control action",
+          timestamp: new Date().toISOString(),
+        })
+      );
   }
 
   ws.send(
     JSON.stringify({
-      type: 'simulation_control_response',
+      type: "simulation_control_response",
       action,
       success: true,
       timestamp: new Date().toISOString(),
@@ -183,14 +183,14 @@ const startSimulationUpdates = () => {
     await broadcastAsteroidUpdates();
   }, 1000); // Update every second
 
-  console.log('🚀 Simulation updates started');
+  console.log("🚀 Simulation updates started");
 };
 
 const stopSimulationUpdates = () => {
   if (simulationInterval) {
     clearInterval(simulationInterval);
     simulationInterval = null;
-    console.log('⏹️ Simulation updates stopped');
+    console.log("⏹️ Simulation updates stopped");
   }
 };
 
@@ -228,13 +228,13 @@ const broadcastAsteroidUpdates = async () => {
         const clientPositions =
           subscription.asteroidIds.length > 0
             ? positions.filter((pos) =>
-              subscription.asteroidIds.includes(pos.id)
-            )
+                subscription.asteroidIds.includes(pos.id)
+              )
             : positions;
 
         client.send(
           JSON.stringify({
-            type: 'asteroid_positions_update',
+            type: "asteroid_positions_update",
             data: clientPositions,
             timestamp: new Date().toISOString(),
           })
@@ -244,7 +244,7 @@ const broadcastAsteroidUpdates = async () => {
       }
     });
   } catch (error) {
-    console.error('Error broadcasting asteroid updates:', error);
+    console.error("Error broadcasting asteroid updates:", error);
   }
 };
 
@@ -259,7 +259,7 @@ const calculateAsteroidPositions = async (
       SELECT id, designation, name, orbital_elements, physical_properties
       FROM asteroids 
       WHERE orbit_class = 'Main-belt Asteroid'
-      ${asteroidIds.length > 0 ? 'AND id = ANY($1)' : ''}
+      ${asteroidIds.length > 0 ? "AND id = ANY($1)" : ""}
       LIMIT 100
     `;
 
@@ -277,7 +277,7 @@ const calculateAsteroidPositions = async (
       physical_properties: asteroid.physical_properties,
     }));
   } catch (error) {
-    console.error('Error calculating asteroid positions:', error);
+    console.error("Error calculating asteroid positions:", error);
     return [];
   }
 };
