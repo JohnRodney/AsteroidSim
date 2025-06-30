@@ -1,11 +1,11 @@
-const express = require("express");
-const { query } = require("../database/connection");
-const { fetchAsteroidData } = require("../services/asteroidDataService");
+const express = require('express');
+const { query } = require('../database/connection');
+const { fetchAsteroidData } = require('../services/asteroidDataService');
 
 const router = express.Router();
 
 // GET /api/asteroids - Get all asteroids with optional filtering
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const {
       limit = 100,
@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
       composition_type,
       min_diameter,
       max_diameter,
-      orbit_class = "Main-belt Asteroid",
+      orbit_class = 'Main-belt Asteroid',
     } = req.query;
 
     let sql = `
@@ -62,17 +62,17 @@ router.get("/", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching asteroids:", error);
+    console.error('Error fetching asteroids:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch asteroids",
+      error: 'Failed to fetch asteroids',
       message: error.message,
     });
   }
 });
 
 // GET /api/asteroids/:id - Get specific asteroid by ID
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -87,7 +87,7 @@ router.get("/:id", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "Asteroid not found",
+        error: 'Asteroid not found',
       });
     }
 
@@ -96,17 +96,17 @@ router.get("/:id", async (req, res) => {
       data: result.rows[0],
     });
   } catch (error) {
-    console.error("Error fetching asteroid:", error);
+    console.error('Error fetching asteroid:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch asteroid",
+      error: 'Failed to fetch asteroid',
       message: error.message,
     });
   }
 });
 
 // GET /api/asteroids/stats/summary - Get asteroid belt statistics
-router.get("/stats/summary", async (req, res) => {
+router.get('/stats/summary', async (req, res) => {
   try {
     const sql = `
       SELECT 
@@ -129,32 +129,32 @@ router.get("/stats/summary", async (req, res) => {
       data: result.rows[0],
     });
   } catch (error) {
-    console.error("Error fetching asteroid statistics:", error);
+    console.error('Error fetching asteroid statistics:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch asteroid statistics",
+      error: 'Failed to fetch asteroid statistics',
       message: error.message,
     });
   }
 });
 
 // POST /api/asteroids/sync - Sync asteroid data from external APIs
-router.post("/sync", async (req, res) => {
+router.post('/sync', async (req, res) => {
   try {
-    console.log("🔄 Starting asteroid data sync...");
+    console.log('🔄 Starting asteroid data sync...');
 
     const syncResult = await fetchAsteroidData();
 
     res.json({
       success: true,
-      message: "Asteroid data sync completed",
+      message: 'Asteroid data sync completed',
       data: syncResult,
     });
   } catch (error) {
-    console.error("Error syncing asteroid data:", error);
+    console.error('Error syncing asteroid data:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to sync asteroid data",
+      error: 'Failed to sync asteroid data',
       message: error.message,
     });
   }

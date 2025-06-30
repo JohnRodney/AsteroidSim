@@ -1,20 +1,20 @@
-const axios = require("axios");
-const { query } = require("../database/connection");
+const axios = require('axios');
+const { query } = require('../database/connection');
 
 // JPL SBDB API configuration
-const JPL_SBDB_BASE_URL = "https://ssd-api.jpl.nasa.gov/sbdb.api";
-const ASTERANK_BASE_URL = "https://asterank.com/api";
+const JPL_SBDB_BASE_URL = 'https://ssd-api.jpl.nasa.gov/sbdb.api';
+const ASTERANK_BASE_URL = 'https://asterank.com/api';
 
 // Asteroid composition densities from the devguide
 const COMPOSITION_DENSITIES = {
-  "C-type": 1.38, // g/cm³
-  "S-type": 2.71, // g/cm³
-  "M-type": 5.32, // g/cm³
+  'C-type': 1.38, // g/cm³
+  'S-type': 2.71, // g/cm³
+  'M-type': 5.32, // g/cm³
 };
 
 const fetchAsteroidData = async () => {
   try {
-    console.log("🔄 Starting asteroid data fetch from external APIs...");
+    console.log('🔄 Starting asteroid data fetch from external APIs...');
 
     // Fetch data from JPL SBDB API
     const jplData = await fetchJPLData();
@@ -39,7 +39,7 @@ const fetchAsteroidData = async () => {
       stored_count: storedCount,
     };
   } catch (error) {
-    console.error("❌ Error fetching asteroid data:", error);
+    console.error('❌ Error fetching asteroid data:', error);
     throw error;
   }
 };
@@ -49,7 +49,7 @@ const fetchJPLData = async () => {
     // Fetch main belt asteroids from JPL SBDB
     const response = await axios.get(JPL_SBDB_BASE_URL, {
       params: {
-        class: "MBA", // Main Belt Asteroids
+        class: 'MBA', // Main Belt Asteroids
         limit: 100, // Start with a reasonable limit
         full_precision: true,
         phys_par: true,
@@ -63,7 +63,7 @@ const fetchJPLData = async () => {
         id: asteroid.spkid,
         designation: asteroid.designation,
         name: asteroid.name || null,
-        orbit_class: asteroid.orbit_class || "Main-belt Asteroid",
+        orbit_class: asteroid.orbit_class || 'Main-belt Asteroid',
         orbital_elements: {
           e: asteroid.orbit?.e,
           q: asteroid.orbit?.q,
@@ -89,7 +89,7 @@ const fetchJPLData = async () => {
 
     return [];
   } catch (error) {
-    console.error("Error fetching JPL data:", error.message);
+    console.error('Error fetching JPL data:', error.message);
     // Return empty array to continue with other data sources
     return [];
   }
@@ -110,7 +110,7 @@ const fetchAsterankData = async () => {
         id: asteroid.id?.toString(),
         designation: asteroid.full_name,
         name: asteroid.proper_name || null,
-        orbit_class: "Main-belt Asteroid",
+        orbit_class: 'Main-belt Asteroid',
         orbital_elements: {
           e: asteroid.e,
           q: asteroid.q,
@@ -137,7 +137,7 @@ const fetchAsterankData = async () => {
 
     return [];
   } catch (error) {
-    console.error("Error fetching Asterank data:", error.message);
+    console.error('Error fetching Asterank data:', error.message);
     // Return empty array to continue with other data sources
     return [];
   }
@@ -151,7 +151,7 @@ const mergeAsteroidData = (jplData, asterankData) => {
     if (asteroid.id) {
       merged.set(asteroid.id, {
         ...asteroid,
-        source: "jpl",
+        source: 'jpl',
       });
     }
   });
@@ -168,12 +168,12 @@ const mergeAsteroidData = (jplData, asterankData) => {
             ...existing.physical_properties,
             ...asteroid.physical_properties,
           },
-          source: "merged",
+          source: 'merged',
         });
       } else {
         merged.set(asteroid.id, {
           ...asteroid,
-          source: "asterank",
+          source: 'asterank',
         });
       }
     }
@@ -245,7 +245,7 @@ const storeAsteroidData = async (asteroids) => {
 
     return storedCount;
   } catch (error) {
-    console.error("Error storing asteroid data:", error);
+    console.error('Error storing asteroid data:', error);
     throw error;
   }
 };
@@ -261,7 +261,7 @@ const getAsteroidById = async (id) => {
     const result = await query(sql, [id]);
     return result.rows[0] || null;
   } catch (error) {
-    console.error("Error fetching asteroid by ID:", error);
+    console.error('Error fetching asteroid by ID:', error);
     throw error;
   }
 };
@@ -283,7 +283,7 @@ const getAsteroidStats = async () => {
     const result = await query(sql);
     return result.rows[0];
   } catch (error) {
-    console.error("Error fetching asteroid stats:", error);
+    console.error('Error fetching asteroid stats:', error);
     throw error;
   }
 };
