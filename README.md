@@ -24,17 +24,20 @@ This repository contains code for simulating asteroid dynamics, including gravit
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/JohnRodney/AsteroidSim.git
 cd AsteroidSim
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Run the simulation:
+
 ```bash
 python main.py
 ```
@@ -66,4 +69,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 John Rodney - [@JohnRodney](https://github.com/JohnRodney)
 
-Project Link: [https://github.com/JohnRodney/AsteroidSim](https://github.com/JohnRodney/AsteroidSim) 
+Project Link: [https://github.com/JohnRodney/AsteroidSim](https://github.com/JohnRodney/AsteroidSim)
