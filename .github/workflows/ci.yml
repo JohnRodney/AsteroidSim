@@ -53,7 +53,7 @@ jobs:
       - name: Run database migrations
         run: |
           cd server
-          npm run migrate:test
+          npm run db:migrate:test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/asteroid_simulation_test
 
