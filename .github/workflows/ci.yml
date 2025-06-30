@@ -49,6 +49,11 @@ jobs:
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/asteroid_simulation_test" > .env.test
           echo "NODE_ENV=test" >> .env.test
           echo "PORT=3001" >> .env.test
+          echo "DB_USER=postgres" >> .env.test
+          echo "DB_PASSWORD=postgres" >> .env.test
+          echo "DB_HOST=localhost" >> .env.test
+          echo "DB_NAME=asteroid_simulation_test" >> .env.test
+          echo "DB_PORT=5432" >> .env.test
 
       - name: Run database migrations
         run: |
@@ -56,6 +61,11 @@ jobs:
           npm run db:migrate:test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/asteroid_simulation_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_NAME: asteroid_simulation_test
+          DB_PORT: 5432
 
       - name: Run tests
         run: |
@@ -63,6 +73,11 @@ jobs:
           npm test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/asteroid_simulation_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_NAME: asteroid_simulation_test
+          DB_PORT: 5432
           NODE_ENV: test
 
       - name: Upload test results
