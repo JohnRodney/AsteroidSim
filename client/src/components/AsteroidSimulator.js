@@ -240,8 +240,8 @@ export class AsteroidSimulator {
     this.scene.useRightHandedSystem = false
 
     // Optimize for performance
-    this.scene.autoClear = false
-    this.scene.autoClearDepthAndStencil = false
+    this.scene.autoClear = true
+    this.scene.autoClearDepthAndStencil = true
   }
 
   startRenderLoop () {
