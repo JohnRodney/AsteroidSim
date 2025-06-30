@@ -7,7 +7,7 @@ on:
     branches: [main, staging]
 
 jobs:
-  test:
+  test-backend:
     runs-on: ubuntu-latest
 
     services:
@@ -38,7 +38,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: |
           cd server
           npm ci
@@ -67,7 +67,7 @@ jobs:
           DB_NAME: asteroid_simulation_test
           DB_PORT: 5432
 
-      - name: Run tests
+      - name: Run backend tests
         run: |
           cd server
           npm test
@@ -80,12 +80,46 @@ jobs:
           DB_PORT: 5432
           NODE_ENV: test
 
-      - name: Upload test results
+      - name: Upload backend test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-${{ matrix.node-version }}
+          name: backend-test-results-${{ matrix.node-version }}
           path: server/coverage/
+          retention-days: 7
+
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install frontend dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd client
+          npm test
+
+      - name: Upload frontend test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-results-${{ matrix.node-version }}
+          path: client/coverage/
           retention-days: 7
 
   lint:
@@ -100,14 +134,24 @@ jobs:
           node-version: "20.x"
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: |
           cd server
           npm ci
 
-      - name: Run linting
+      - name: Install frontend dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run backend linting
         run: |
           cd server
+          npm run lint
+
+      - name: Run frontend linting
+        run: |
+          cd client
           npm run lint
 
   security:
@@ -122,12 +166,22 @@ jobs:
           node-version: "20.x"
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: |
           cd server
           npm ci
 
-      - name: Run security audit
+      - name: Install frontend dependencies
+        run: |
+          cd client
+          npm ci
+
+      - name: Run backend security audit
         run: |
           cd server
+          npm audit --audit-level=moderate
+
+      - name: Run frontend security audit
+        run: |
+          cd client
           npm audit --audit-level=moderate
